@@ -46,7 +46,7 @@ export default function Home() {
 
       {/* Typing Role */}
       <div className="flex flex-wrap justify-center items-center mb-4 md:mb-6 text-2xl md:text-4xl font-bold whitespace-nowrap">
-        <span className="mr-2">I am</span>
+        <span className="mr-2"> I am </span>
         <motion.span
           key={index}
           initial={{ opacity: 0.5 }}
