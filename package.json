@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@react-three/drei": "^10.0.8",
+    "@react-three/fiber": "^9.1.2",
     "@tailwindcss/vite": "^4.1.5",
     "emailjs-com": "^3.2.0",
     "framer-motion": "^12.10.0",
@@ -21,8 +23,14 @@
     "react-icons": "^5.5.0",
     "react-intersection-observer": "^9.16.0",
     "react-router-dom": "^7.6.0",
+    "react-scroll": "^1.9.3",
+    "react-scroll-parallax": "^3.4.5",
     "react-toastify": "^11.0.5",
-    "tailwindcss": "^4.1.5"
+    "react-tsparticles": "^2.12.2",
+    "react-vertical-timeline-component": "^3.5.3",
+    "tailwindcss": "^4.1.5",
+    "three": "^0.176.0",
+    "tsparticles": "^2.12.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
@@ -34,6 +42,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
+    "npm-force-resolutions": "^0.0.10",
     "vite": "^6.3.5"
   }
 }

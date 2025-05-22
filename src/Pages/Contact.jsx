@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { FaMapMarkerAlt, FaPhoneAlt, FaEnvelope, FaPaperPlane } from "react-icons/fa";
+import { FaMapMarkerAlt, FaPhoneAlt, FaEnvelope } from "react-icons/fa";
 import { motion } from "framer-motion";
 import emailjs from "emailjs-com";
 import { ToastContainer, toast } from "react-toastify";
@@ -34,207 +34,192 @@ export default function Contact() {
       );
   };
 
+  const contactInfo = [
+    {
+      icon: <FaMapMarkerAlt />,
+      title: "Address",
+      text: "Calicut, Kerala, India",
+    },
+    {
+      icon: <FaPhoneAlt />,
+      title: "Call Us",
+      text: "+91 7902480917",
+    },
+    {
+      icon: <FaEnvelope />,
+      title: "Email Us",
+      text: <>marjanmuhammad790<br/>@gmail.com</>,
+    }
+    
+  ];
+
   return (
-    <div
-      className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 py-16 px-4 sm:px-6 font-montserrat"
-      id="contact"
-    >
-      <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-12">
-          <motion.h2 
-            className="text-4xl font-bold mb-4 text-gray-800"
+    <div className="relative min-h-screen overflow-x-hidden pt-20 font-montserrat text-white">
+      {/* Background Video */}
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        className="fixed top-0 left-0 w-full h-full object-cover -z-10"
+      >
+        <source src="/contact-bg.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+
+      {/* Overlay */}
+      <div className="fixed top-0 left-0 w-full h-full bg-black/40 -z-5" />
+
+      {/* Main Section */}
+      <main className="relative max-w-7xl mx-auto bg-black/40 rounded-lg shadow-lg px-6 md:px-12 py-16 flex flex-col md:flex-row items-start gap-12">
+
+        {/* Mobile video on top */}
+        <motion.div
+          className="block md:hidden w-full max-w-md mx-auto mb-8 rounded-full aspect-square overflow-hidden shadow-xl"
+          style={{
+            boxShadow: "0 0 80px rgba(255, 255, 255, 0.1)",
+            backdropFilter: "blur(4px)",
+          }}
+          initial={{ opacity: 0, scale: 0.9 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6 }}
+        >
+          <video
+            src="/video/Screen Recording 1947-03-01 at 5.21.57 PM.mov"
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="w-full h-full object-cover rounded-full bg-transparent"
+            style={{
+              transformStyle: "preserve-3d",
+            }}
+          />
+        </motion.div>
+
+        {/* Left Section */}
+        <div className="flex-1 w-full max-w-xl space-y-12 z-20">
+          <motion.h2
+            className="text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-blue-300 via-pink-300 to-purple-400 bg-clip-text text-transparent drop-shadow-lg"
             initial={{ opacity: 0, y: -20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
             Contact
           </motion.h2>
+
           <motion.p
-            className="text-gray-600 max-w-2xl mx-auto"
+            className="text-gray-300 max-w-lg"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            Have a project in mind or want to collaborate? Feel free to reach out through the form or contact details below.
+            Have a project in mind or want to collaborate? Feel free to reach
+            out through the form or contact details below.
           </motion.p>
-        </div>
 
-        {/* Contact Info Cards - Horizontal on mobile */}
-        <div className="mb-12">
-          <div className="md:hidden overflow-x-auto pb-4">
-            <div className="flex space-x-4 w-max px-4">
+          {/* Contact Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {contactInfo.map((info, i) => (
               <motion.div
-                className="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center text-center hover:shadow-xl transition-shadow duration-300 min-w-[250px]"
+                key={i}
+                className="bg-transparent border border-white rounded-xl p-6 text-center hover:shadow-lg transition-shadow duration-300"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
+                transition={{ duration: 0.6 + i * 0.2 }}
                 whileHover={{ y: -5 }}
               >
-                <div className="bg-blue-100 p-4 rounded-full mb-4">
-                  <FaMapMarkerAlt className="text-blue-600 text-xl" />
+                <div className="bg-white bg-opacity-20 p-4 rounded-full inline-block mb-4">
+                  {React.cloneElement(info.icon, {
+                    className: "text-blue-500 text-2xl drop-shadow-md",
+                  })}
                 </div>
-                <h4 className="font-semibold mb-1 text-gray-800">Address</h4>
-                <p className="text-gray-600 text-sm">Calicut, Kerala, India</p>
+                <h4 className="font-semibold mb-1 text-white">{info.title}</h4>
+                <p className="text-gray-300 text-sm">{info.text}</p>
               </motion.div>
-
-              <motion.div
-                className="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center text-center hover:shadow-xl transition-shadow duration-300 min-w-[250px]"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
-                whileHover={{ y: -5 }}
-              >
-                <div className="bg-blue-100 p-4 rounded-full mb-4">
-                  <FaPhoneAlt className="text-blue-600 text-xl" />
-                </div>
-                <h4 className="font-semibold mb-1 text-gray-800">Call Us</h4>
-                <p className="text-gray-600 text-sm">+91 7902480917</p>
-              </motion.div>
-
-              <motion.div
-                className="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center text-center hover:shadow-xl transition-shadow duration-300 min-w-[250px]"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1 }}
-                whileHover={{ y: -5 }}
-              >
-                <div className="bg-blue-100 p-4 rounded-full mb-4">
-                  <FaEnvelope className="text-blue-600 text-xl" />
-                </div>
-                <h4 className="font-semibold mb-1 text-gray-800">Email Us</h4>
-                <p className="text-gray-600 text-sm">marjanmuhammad790@gmail.com</p>
-              </motion.div>
-            </div>
+            ))}
           </div>
 
-          {/* Desktop layout (3 columns) */}
-          <div className="hidden md:grid md:grid-cols-3 gap-6">
-            <motion.div
-              className="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center text-center hover:shadow-xl transition-shadow duration-300"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              whileHover={{ y: -5 }}
-            >
-              <div className="bg-blue-100 p-4 rounded-full mb-4">
-                <FaMapMarkerAlt className="text-blue-600 text-xl" />
+          {/* Contact Form */}
+          <div className="p-8 rounded-xl bg-black/30 backdrop-blur-md border border-white/30">
+            <form ref={form} onSubmit={sendEmail} className="space-y-6">
+              <div>
+                <label className="block text-white font-medium mb-1">
+                  Your Name
+                </label>
+                <input
+                  type="text"
+                  name="user_name"
+                  required
+                  className="w-full px-4 py-2 rounded-md bg-transparent text-white placeholder-gray-400 border border-white focus:outline-none focus:ring-2 focus:ring-white"
+                  placeholder="Enter your name"
+                />
               </div>
-              <h4 className="font-semibold mb-1 text-gray-800">Address</h4>
-              <p className="text-gray-600 text-sm">Calicut, Kerala, India</p>
-            </motion.div>
-
-            <motion.div
-              className="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center text-center hover:shadow-xl transition-shadow duration-300"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              whileHover={{ y: -5 }}
-            >
-              <div className="bg-blue-100 p-4 rounded-full mb-4">
-                <FaPhoneAlt className="text-blue-600 text-xl" />
+              <div>
+                <label className="block text-white font-medium mb-1">
+                  Your Email
+                </label>
+                <input
+                  type="email"
+                  name="user_email"
+                  required
+                  className="w-full px-4 py-2 rounded-md bg-transparent text-white placeholder-gray-400 border border-white focus:outline-none focus:ring-2 focus:ring-white"
+                  placeholder="Enter your email"
+                />
               </div>
-              <h4 className="font-semibold mb-1 text-gray-800">Call Us</h4>
-              <p className="text-gray-600 text-sm">+91 7902480917</p>
-            </motion.div>
-
-            <motion.div
-              className="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center text-center hover:shadow-xl transition-shadow duration-300"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1 }}
-              whileHover={{ y: -5 }}
-            >
-              <div className="bg-blue-100 p-4 rounded-full mb-4">
-                <FaEnvelope className="text-blue-600 text-xl" />
+              <div>
+                <label className="block text-white font-medium mb-1">
+                  Message
+                </label>
+                <textarea
+                  name="message"
+                  rows="5"
+                  required
+                  className="w-full px-4 py-2 rounded-md bg-transparent text-white placeholder-gray-400 border border-white focus:outline-none focus:ring-2 focus:ring-white"
+                  placeholder="Write your message here..."
+                ></textarea>
               </div>
-              <h4 className="font-semibold mb-1 text-gray-800">Email Us</h4>
-              <p className="text-gray-600 text-sm">marjanmuhammad790@gmail.com</p>
-            </motion.div>
+              <div className="flex justify-center">
+                <button
+                  type="submit"
+                  className="px-6 py-3 bg-blue-500 text-white font-semibold rounded-md border border-blue-500 transition-colors duration-300"
+                >
+                  Send Message
+                </button>
+              </div>
+            </form>
           </div>
         </div>
 
-        {/* Contact Form */}
-        <motion.form
-          ref={form}
-          onSubmit={sendEmail}
-          className="bg-white rounded-xl shadow-xl p-8 space-y-6 text-left max-w-3xl mx-auto"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 1 }}
+        {/* Right Section: Rounded Video for desktop */}
+        <motion.div
+          className="hidden md:block absolute right-10 top-1/2 transform -translate-y-1/2 rounded-full aspect-square overflow-hidden shadow-xl"
+          style={{
+            width: "550px",
+            boxShadow: "0 0 80px rgb(0,0,0)",
+            backdropFilter: "blur(4px)",
+            zIndex: 10,
+          }}
+          initial={{ opacity: 0, scale: 0.9 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6 }}
         >
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                Your Name
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="user_name"
-                required
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200"
-                placeholder="John Doe"
-              />
-            </div>
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Your Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="user_email"
-                required
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200"
-                placeholder="john@example.com"
-              />
-            </div>
-          </div>
-          
-          <div>
-            <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
-              Subject
-            </label>
-            <input
-              type="text"
-              id="subject"
-              name="subject"
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200"
-              placeholder="Regarding a project"
-            />
-          </div>
-          
-          <div>
-            <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
-              Your Message
-            </label>
-            <textarea
-              id="message"
-              name="message"
-              rows="5"
-              required
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200"
-              placeholder="Hello, I would like to discuss about..."
-            ></textarea>
-          </div>
-          
-          <motion.div 
-            className="flex justify-center pt-4"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <button
-              type="submit"
-              className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:shadow-lg transition duration-300 flex items-center gap-2"
-            >
-              <FaPaperPlane />
-              <span>Send Message</span>
-            </button>
-          </motion.div>
-        </motion.form>
+         <video
+  src="/video/Screen Recording 1947-03-01 at 5.21.57 PM.mov"
+  autoPlay
+  muted
+  loop
+  playsInline
+  className="w-full h-full object-cover rounded-full bg-transparent"
+  style={{
+    transformStyle: "preserve-3d",
+  }}
+/>
 
-        <ToastContainer />
-      </div>
+        </motion.div>
+      </main>
+
+      <ToastContainer />
     </div>
   );
 }
