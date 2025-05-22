@@ -19,10 +19,20 @@ export default function App() {
     background: { color: { value: "#000000" } },
     fpsLimit: 60,
     interactivity: {
+      detectsOn: "window",
       events: {
-        onClick: { enable: false },
-        onHover: { enable: false },
+        onClick: { enable: true, mode: "push" },
+        onHover: { enable: true, mode: "repulse" },
         resize: true,
+      },
+      modes: {
+        repulse: {
+          distance: 100,
+          duration: 0.4,
+        },
+        push: {
+          quantity: 4,
+        },
       },
     },
     particles: {
@@ -50,6 +60,7 @@ export default function App() {
     },
     detectRetina: true,
   };
+  
 
   return (
     <>
