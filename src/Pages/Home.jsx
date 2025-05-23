@@ -81,17 +81,19 @@ export default function Home() {
         </motion.p>
 
         <motion.button
-          whileHover={{
-            scale: 1.05,
-            backgroundColor: "#2563eb",
-            color: "white",
-          }}
-          whileTap={{ scale: 0.95 }}
-          className="px-5 py-2 md:px-6 md:py-3 border-2 border-blue-500 text-blue-500 bg-white rounded-full font-semibold transition-colors duration-300 cursor-pointer text-sm md:text-base hover:bg-blue-500 hover:text-white"
-          onClick={handleViewWork}
-        >
-          View My Work
-        </motion.button>
+  whileHover={{
+    scale: 1.07,
+    backgroundColor: "#2563eb",
+    color: "white",
+    boxShadow: "0 0 30px rgba(37, 99, 235, 0.9)",
+  }}
+  whileTap={{ scale: 0.95, boxShadow: "0 0 15px rgba(37, 99, 235, 0.7)" }}
+  onClick={handleViewWork}
+  className="px-5 py-2 md:px-6 md:py-3 border-2 border-blue-500 text-blue-500 bg-white font-semibold cursor-pointer text-sm md:text-base soft-glow-button"
+>
+  View My Work
+</motion.button>
+
       </motion.div>
 
     

@@ -1,1 +1,17 @@
 @import "tailwindcss";
+@keyframes softGlow {
+    0%, 100% {
+      box-shadow: 0 0 6px rgba(37, 99, 235, 0.5);
+    }
+    50% {
+      box-shadow: 0 0 20px rgba(37, 99, 235, 0.8);
+    }
+  }
+  
+  .soft-glow-button {
+    border-radius: 9999px; /* full rounded */
+    animation: softGlow 3s ease-in-out infinite;
+    transition: box-shadow 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  

@@ -1,11 +1,16 @@
+import React from "react";
+
 import Navbar from "./components/Navbar";
 import Home from "./Pages/Home";
 import About from "./Pages/About";
-import Services from "./Pages/Serices";
+import Services from "./Pages/Serices"
 import Work from "./Pages/Works";
 import Resume from "./Pages/Resume";
 import Contact from "./Pages/Contact";
 import Footer from "./Pages/Footer";
+
+
+
 import "./App.css";
 import Particles from "react-tsparticles";
 import { loadFull } from "tsparticles";
@@ -60,7 +65,6 @@ export default function App() {
     },
     detectRetina: true,
   };
-  
 
   return (
     <>
@@ -70,6 +74,7 @@ export default function App() {
         <section id="home"><Home /></section>
         <section id="about"><About /></section>
         <section id="services"><Services /></section>
+      
         <section id="work"><Work /></section>
         <section id="resume"><Resume /></section>
         <section id="contact"><Contact /></section>
