@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ToastContainer, toast } from 'react-toastify';
@@ -278,7 +278,7 @@ export default function Home() {
   };
 
   return (
-    <div className="">
+    <div className="min-h-screen flex flex-col">
       <ToastContainer
         position="top-right"
         autoClose={2000}
@@ -411,7 +411,6 @@ export default function Home() {
               <span className="font-mono">AI Assistant</span>
             </div>
             <div className="flex items-center gap-2">
-
               <button
                 onClick={() => setChatOpen(false)}
                 className="hover:text-gray-300 text-lg font-bold transition-colors p-1"
