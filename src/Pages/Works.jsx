@@ -16,6 +16,14 @@ export default function Work() {
       imageUrl: "https://i.postimg.cc/Kzxnk0bV/1-F9-DF900-BB10-4-D81-B8-D7-2-B5-B099-C27-BD-1-201-a.jpg",
       type: "image",
     },
+    {
+      title: "Bridgeon Student Management System",
+      description:
+        "A full-stack student management system built to manage student data, course enrollment, attendance, and academic records with secure backend integration and efficient data handling.",
+      imageUrl: "https://i.postimg.cc/kXt6Zzht/Screenshot-2026-04-26-202624.png",
+      type: "image",
+      link: "https://bridgeonfrontend.vercel.app/",
+    },
   ];
 
   const fadeUp = {
@@ -51,20 +59,21 @@ export default function Work() {
         </h2>
 
         <div className="flex flex-col space-y-12">
-          {projects.map(({ title, description, imageUrl, videoUrl, type }, i) => (
+          {projects.map(({ title, description, imageUrl, videoUrl, type, link }, i) => (
             <motion.div
               key={title}
               className="bg-white/10 backdrop-blur-md rounded-xl shadow-xl overflow-hidden transition-all duration-300 hover:scale-[1.02]"
               variants={fadeUp}
               custom={i}
             >
-              <div className="relative aspect-video w-full">
+              <div className="relative aspect-video w-full group">
                 {type === "image" ? (
                   <motion.img
                     src={imageUrl}
                     alt={title}
                     className="w-full h-full object-cover"
-                    loading="lazy"
+                    fetchPriority="high"
+                    decoding="async"
                     whileHover={{ scale: 1.03 }}
                     transition={{ duration: 0.4 }}
                   />
@@ -80,6 +89,22 @@ export default function Work() {
                     whileHover={{ scale: 1.03 }}
                     transition={{ duration: 0.4 }}
                   />
+                )}
+                {link && (
+                  <a
+                    href={link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-300 z-10"
+                  >
+                    <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-6 py-3 rounded-full border border-white/30 hover:bg-white/30 transition-all shadow-lg hover:scale-105">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-white">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <span className="text-white font-medium tracking-wide">View Project</span>
+                    </div>
+                  </a>
                 )}
               </div>
               <div className="p-6">
