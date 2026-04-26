@@ -140,13 +140,13 @@ export default function Services() {
       {
         title: "Web Development",
         icon: FaCode,
-        desc: "I create responsive, scalable websites using React and Node.js. Clean code, reusable components, and performance are my focus.",
+        desc: "I create responsive, scalable websites using React and .NET Microservices. Clean code, reusable components, and performance are my focus.",
         color: "#3B82F6",
       },
       {
         title: "Hosting & Deployment",
         icon: FaServer,
-        desc: "Deploy apps on Vercel, Netlify, or cPanel with domain + SSL. Includes CI/CD setup.",
+        desc: "Deploy apps on Vercel, Netlify, Render, or cPanel with domain + SSL. Includes CI/CD setup.",
         color: "#10B981",
       },
       {

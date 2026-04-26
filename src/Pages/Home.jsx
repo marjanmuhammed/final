@@ -31,19 +31,24 @@ export default function Home() {
   useEffect(() => {
     let isMounted = true;
     
-    // Progressive Loading: Load frames sequentially
+    // Progressive Loading: Load the first frame immediately to fix initial delay
     const loadImages = () => {
-      for (let i = 1; i <= TOTAL_FRAMES; i++) {
-        const img = new window.Image();
-        const paddedIndex = i.toString().padStart(3, '0');
-        img.src = `/images/herosection/ezgif-frame-${paddedIndex}.png`;
+      const firstImg = new window.Image();
+      firstImg.src = `/images/herosection/ezgif-frame-001.png`;
+      firstImg.onload = () => {
+        if (!isMounted) return;
+        imagesRef.current[1] = firstImg;
+        renderFrame(1);
         
-        img.onload = () => {
-          if (!isMounted) return;
-          if (i === 1) renderFrame(1);
-        };
-        imagesRef.current[i] = img;
-      }
+        // Background loading: Load remaining frames after first frame is ready
+        // to prevent network blocking and ensure instantaneous first render.
+        for (let i = 2; i <= TOTAL_FRAMES; i++) {
+          const img = new window.Image();
+          const paddedIndex = i.toString().padStart(3, '0');
+          img.src = `/images/herosection/ezgif-frame-${paddedIndex}.png`;
+          imagesRef.current[i] = img;
+        }
+      };
     };
     loadImages();
 
@@ -79,24 +84,34 @@ export default function Home() {
   };
 
   const drawToCanvas = (canvas, ctx, img) => {
-    // Match canvas to window resolution 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    // Match canvas to window resolution while accounting for device pixel ratio (Clarity Fix)
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = window.innerWidth * dpr;
+    canvas.height = window.innerHeight * dpr;
+    canvas.style.width = `${window.innerWidth}px`;
+    canvas.style.height = `${window.innerHeight}px`;
 
-    const canvasRatio = canvas.width / canvas.height;
+    // Scale the context to account for DPR
+    ctx.scale(dpr, dpr);
+
+    const canvasRatio = window.innerWidth / window.innerHeight;
     const imgRatio = img.width / img.height;
-    let drawWidth = canvas.width;
-    let drawHeight = canvas.height;
+    let drawWidth = window.innerWidth;
+    let drawHeight = window.innerHeight;
 
     // Mobile Responsive natural object-cover logic
     if (canvasRatio > imgRatio) {
-      drawHeight = canvas.width / imgRatio;
+      drawHeight = window.innerWidth / imgRatio;
     } else {
-      drawWidth = canvas.height * imgRatio;
+      drawWidth = window.innerHeight * imgRatio;
     }
     
-    const offsetX = (canvas.width - drawWidth) / 2;
-    const offsetY = (canvas.height - drawHeight) / 2;
+    const offsetX = (window.innerWidth - drawWidth) / 2;
+    const offsetY = (window.innerHeight - drawHeight) / 2;
+
+    // Enhance image smoothing quality
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
 
     ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
   };
