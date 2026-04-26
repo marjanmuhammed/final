@@ -43,7 +43,7 @@ export default function Home() {
         renderFrame(1);
         
         // PRELOAD ESSENTIAL FRAMES FIRST
-        const CRITICAL_FRAMES = 30;
+        const CRITICAL_FRAMES = 10;
         let criticalIndices = [];
         let backgroundIndices = [];
         
@@ -62,6 +62,7 @@ export default function Home() {
         criticalIndices.forEach((frameNum) => {
           const img = new window.Image();
           const paddedIndex = frameNum.toString().padStart(3, '0');
+          img.fetchPriority = "high";
           img.src = `/images/herosection-webp/ezgif-frame-${paddedIndex}.webp`;
           img.onload = () => {
              if (!isMounted) return;
@@ -77,17 +78,18 @@ export default function Home() {
                 let listIndex = 0;
                 const loadDetailedBatch = () => {
                   if (!isMounted || listIndex >= backgroundIndices.length) return;
-                  const batchSize = 5;
+                  const batchSize = 4;
                   for (let b = 0; b < batchSize && listIndex < backgroundIndices.length; b++, listIndex++) {
                     const dFrame = backgroundIndices[listIndex];
                     const dImg = new window.Image();
+                    dImg.fetchPriority = "low"; // Tell browser not to block main thread/network with these
                     const dPaddedIndex = dFrame.toString().padStart(3, '0');
                     dImg.src = `/images/herosection-webp/ezgif-frame-${dPaddedIndex}.webp`;
                     imagesRef.current[dFrame] = dImg;
                   }
-                  setTimeout(loadDetailedBatch, 50);
+                  setTimeout(loadDetailedBatch, 100); // Give browser breathing room
                 };
-                setTimeout(loadDetailedBatch, 500);
+                setTimeout(loadDetailedBatch, 300);
              }
           };
           img.onerror = () => {

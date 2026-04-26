@@ -6,21 +6,21 @@ export default function Work() {
       title: "7 Up Website",
       description:
         "A visually appealing and interactive website for the 7 Up brand, focusing on vibrant design and smooth user experience.",
-      imageUrl: "https://i.postimg.cc/Df5cs38c/166-CFDAF-198-A-4-BD1-B07-F-B1-F39-E0-D776-D-1-201-a.jpg",
+      imageUrl: "/images/works-1.jpg",
       type: "image",
     },
     {
       title: "Booking.com Website",
       description:
         "A robust travel booking platform with extensive search and filter options, designed for easy navigation and quick booking.",
-      imageUrl: "https://i.postimg.cc/Kzxnk0bV/1-F9-DF900-BB10-4-D81-B8-D7-2-B5-B099-C27-BD-1-201-a.jpg",
+      imageUrl: "/images/works-2.jpg",
       type: "image",
     },
     {
       title: "Bridgeon Student Management System",
       description:
         "A full-stack student management system built to manage student data, course enrollment, attendance, and academic records with secure backend integration and efficient data handling.",
-      imageUrl: "https://i.postimg.cc/kXt6Zzht/Screenshot-2026-04-26-202624.png",
+      imageUrl: "/images/works-3.png",
       type: "image",
       link: "https://bridgeonfrontend.vercel.app/",
     },
@@ -72,7 +72,7 @@ export default function Work() {
                     src={imageUrl}
                     alt={title}
                     className="w-full h-full object-cover"
-                    fetchPriority="high"
+                    loading="lazy"
                     decoding="async"
                     whileHover={{ scale: 1.03 }}
                     transition={{ duration: 0.4 }}
