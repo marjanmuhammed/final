@@ -40,24 +40,35 @@ export default function Home() {
         imagesRef.current[1] = firstImg;
         renderFrame(1);
         
-        // Delay loading the rest to let critical videos/images load first
+        // PROGRESSIVE INTERLEAVED LOADING FOR INSTANT FEEL
+        // 1. Sparse frames (every 10th frame) load first so the whole scroll range has images
+        // 2. The rest load afterwards.
+        let sparseIndices = [];
+        let detailedIndices = [];
+        for (let i = 2; i <= TOTAL_FRAMES; i++) {
+          if (i % 10 === 0) sparseIndices.push(i);
+          else detailedIndices.push(i);
+        }
+        const loadList = [...sparseIndices, ...detailedIndices];
+        
         setTimeout(() => {
           if (!isMounted) return;
-          
-          let i = 2;
+          let listIndex = 0;
           const loadBatch = () => {
-            if (!isMounted || i > TOTAL_FRAMES) return;
-            // Load 5 frames at a time to prevent network bottleneck
-            for (let b = 0; b < 5 && i <= TOTAL_FRAMES; b++, i++) {
+            if (!isMounted || listIndex >= loadList.length) return;
+            // Load in small batches to leave network open for Works/Contact videos
+            const batchSize = 6;
+            for (let b = 0; b < batchSize && listIndex < loadList.length; b++, listIndex++) {
+              const frameNum = loadList[listIndex];
               const img = new window.Image();
-              const paddedIndex = i.toString().padStart(3, '0');
+              const paddedIndex = frameNum.toString().padStart(3, '0');
               img.src = `/images/herosection/ezgif-frame-${paddedIndex}.png`;
-              imagesRef.current[i] = img;
+              imagesRef.current[frameNum] = img;
             }
-            setTimeout(loadBatch, 50); // small delay between batches
+            setTimeout(loadBatch, 30); 
           };
           loadBatch();
-        }, 1500);
+        }, 300); // Small 0.3s delay is enough to let Works images & Contact video start downloading
       };
     };
     loadImages();
