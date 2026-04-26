@@ -43,7 +43,7 @@ export default function Home() {
         renderFrame(1);
         
         // PRELOAD ESSENTIAL FRAMES FIRST
-        const CRITICAL_FRAMES = 20;
+        const CRITICAL_FRAMES = 10;
         let criticalIndices = [];
         let backgroundIndices = [];
         
@@ -78,7 +78,7 @@ export default function Home() {
                 let listIndex = 0;
                 const loadDetailedBatch = () => {
                   if (!isMounted || listIndex >= backgroundIndices.length) return;
-                  const batchSize = 6;
+                  const batchSize = 8;
                   for (let b = 0; b < batchSize && listIndex < backgroundIndices.length; b++, listIndex++) {
                     const dFrame = backgroundIndices[listIndex];
                     const dImg = new window.Image();

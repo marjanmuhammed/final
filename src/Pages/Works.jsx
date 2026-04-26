@@ -45,7 +45,7 @@ export default function Work() {
   return (
     <div className="relative min-h-screen text-white px-6 md:px-12 pt-24 pb-20 font-montserrat overflow-hidden">
       {/* 🔲 Background Video */}
-   
+
       {/* 🟣 Overlay */}
       <div className="absolute top-0 left-0 w-full h-full bg-black/60 z-0" />
 
@@ -56,7 +56,7 @@ export default function Work() {
         whileInView="visible"
         viewport={{ once: true, amount: 0.3 }}
       >
-        <h2  className="text-3xl md:text-4xl font-extrabold mb-10 tracking-tight bg-gradient-to-r from-blue-300 via-pink-300 to-purple-400 bg-clip-text text-transparent drop-shadow-lg">
+        <h2 className="text-3xl md:text-4xl font-extrabold mb-10 tracking-tight bg-gradient-to-r from-blue-300 via-pink-300 to-purple-400 bg-clip-text text-transparent drop-shadow-lg">
 
           Delivered Projects
         </h2>
@@ -75,8 +75,6 @@ export default function Work() {
                     src={imageUrl}
                     alt={title}
                     className="w-full h-full object-cover"
-                    loading="lazy"
-                    decoding="async"
                     whileHover={{ scale: 1.03 }}
                     transition={{ duration: 0.4 }}
                   />
@@ -121,3 +119,6 @@ export default function Work() {
     </div>
   );
 }
+
+
+////////////////////
