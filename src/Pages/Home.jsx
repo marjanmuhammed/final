@@ -43,7 +43,7 @@ export default function Home() {
         renderFrame(1);
         
         // PRELOAD ESSENTIAL FRAMES FIRST
-        const CRITICAL_FRAMES = 10;
+        const CRITICAL_FRAMES = 30;
         let criticalIndices = [];
         let backgroundIndices = [];
         
@@ -78,7 +78,7 @@ export default function Home() {
                 let listIndex = 0;
                 const loadDetailedBatch = () => {
                   if (!isMounted || listIndex >= backgroundIndices.length) return;
-                  const batchSize = 4;
+                  const batchSize = 6;
                   for (let b = 0; b < batchSize && listIndex < backgroundIndices.length; b++, listIndex++) {
                     const dFrame = backgroundIndices[listIndex];
                     const dImg = new window.Image();
@@ -87,9 +87,9 @@ export default function Home() {
                     dImg.src = `/images/herosection-webp/ezgif-frame-${dPaddedIndex}.webp`;
                     imagesRef.current[dFrame] = dImg;
                   }
-                  setTimeout(loadDetailedBatch, 100); // Give browser breathing room
+                  setTimeout(loadDetailedBatch, 30); // Faster background loading
                 };
-                setTimeout(loadDetailedBatch, 300);
+                setTimeout(loadDetailedBatch, 100);
              }
           };
           img.onerror = () => {
