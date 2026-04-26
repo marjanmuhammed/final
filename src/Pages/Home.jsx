@@ -40,14 +40,24 @@ export default function Home() {
         imagesRef.current[1] = firstImg;
         renderFrame(1);
         
-        // Background loading: Load remaining frames after first frame is ready
-        // to prevent network blocking and ensure instantaneous first render.
-        for (let i = 2; i <= TOTAL_FRAMES; i++) {
-          const img = new window.Image();
-          const paddedIndex = i.toString().padStart(3, '0');
-          img.src = `/images/herosection/ezgif-frame-${paddedIndex}.png`;
-          imagesRef.current[i] = img;
-        }
+        // Delay loading the rest to let critical videos/images load first
+        setTimeout(() => {
+          if (!isMounted) return;
+          
+          let i = 2;
+          const loadBatch = () => {
+            if (!isMounted || i > TOTAL_FRAMES) return;
+            // Load 5 frames at a time to prevent network bottleneck
+            for (let b = 0; b < 5 && i <= TOTAL_FRAMES; b++, i++) {
+              const img = new window.Image();
+              const paddedIndex = i.toString().padStart(3, '0');
+              img.src = `/images/herosection/ezgif-frame-${paddedIndex}.png`;
+              imagesRef.current[i] = img;
+            }
+            setTimeout(loadBatch, 50); // small delay between batches
+          };
+          loadBatch();
+        }, 1500);
       };
     };
     loadImages();
