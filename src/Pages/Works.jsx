@@ -1,4 +1,7 @@
 import { motion } from "framer-motion";
+import work1 from "../assets/works-1.jpg";
+import work2 from "../assets/works-2.jpg";
+import work3 from "../assets/works-3.png";
 
 export default function Work() {
   const projects = [
@@ -6,21 +9,21 @@ export default function Work() {
       title: "7 Up Website",
       description:
         "A visually appealing and interactive website for the 7 Up brand, focusing on vibrant design and smooth user experience.",
-      imageUrl: "/images/works-1.jpg",
+      imageUrl: work1,
       type: "image",
     },
     {
       title: "Booking.com Website",
       description:
         "A robust travel booking platform with extensive search and filter options, designed for easy navigation and quick booking.",
-      imageUrl: "/images/works-2.jpg",
+      imageUrl: work2,
       type: "image",
     },
     {
       title: "Bridgeon Student Management System",
       description:
         "A full-stack student management system built to manage student data, course enrollment, attendance, and academic records with secure backend integration and efficient data handling.",
-      imageUrl: "/images/works-3.png",
+      imageUrl: work3,
       type: "image",
       link: "https://bridgeonfrontend.vercel.app/",
     },

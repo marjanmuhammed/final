@@ -43,7 +43,7 @@ export default function Home() {
         renderFrame(1);
         
         // PRELOAD ESSENTIAL FRAMES FIRST
-        const CRITICAL_FRAMES = 30;
+        const CRITICAL_FRAMES = 20;
         let criticalIndices = [];
         let backgroundIndices = [];
         
