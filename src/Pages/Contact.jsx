@@ -11,27 +11,29 @@ export default function Contact() {
   const sendEmail = (e) => {
     e.preventDefault();
 
-    emailjs
-      .sendForm(
-        "service_prj6s4g",
-        "template_05slqbq",
-        form.current,
-        "LlWqMkvQa_2OT3RKm"
-      )
-      .then(
-        () => {
+    const formData = new FormData(form.current);
+
+    fetch("https://formsubmit.co/ajax/marjanmuhammad790@gmail.com", {
+      method: "POST",
+      body: formData,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
           toast.success("Email Sent Successfully!", {
             position: "top-center",
           });
           e.target.reset();
-        },
-        (error) => {
-          console.error("Email sending error:", error);
-          toast.error("Failed to send message. Please try again.", {
-            position: "top-center",
-          });
+        } else {
+          throw new Error("FormSubmit Error");
         }
-      );
+      })
+      .catch((error) => {
+        console.error("Email sending error:", error);
+        toast.error("Failed to send message. Please try again.", {
+          position: "top-center",
+        });
+      });
   };
 
   const contactInfo = [

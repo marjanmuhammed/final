@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { motion, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
+import { motion, useScroll, useTransform, useMotionValueEvent, AnimatePresence } from "framer-motion";
 
 const roles = ["Full Stack Developer", "Freelancer", "Designer"];
 
@@ -7,9 +7,11 @@ export default function Home() {
   const [index, setIndex] = useState(0);
   const [displayedText, setDisplayedText] = useState("");
   const [charIndex, setCharIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [progress, setProgress] = useState(0);
 
   // --- High-End Playback Animation ---
-  const TOTAL_FRAMES = 240;
+  const TOTAL_FRAMES = 120;
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const imagesRef = useRef([]);
@@ -34,41 +36,68 @@ export default function Home() {
     // Progressive Loading: Load the first frame immediately to fix initial delay
     const loadImages = () => {
       const firstImg = new window.Image();
-      firstImg.src = `/images/herosection/ezgif-frame-001.png`;
+      firstImg.src = `/images/herosection-webp/ezgif-frame-001.webp`;
       firstImg.onload = () => {
         if (!isMounted) return;
         imagesRef.current[1] = firstImg;
         renderFrame(1);
         
-        // PROGRESSIVE INTERLEAVED LOADING FOR INSTANT FEEL
-        // 1. Sparse frames (every 10th frame) load first so the whole scroll range has images
-        // 2. The rest load afterwards.
-        let sparseIndices = [];
-        let detailedIndices = [];
-        for (let i = 2; i <= TOTAL_FRAMES; i++) {
-          if (i % 10 === 0) sparseIndices.push(i);
-          else detailedIndices.push(i);
-        }
-        const loadList = [...sparseIndices, ...detailedIndices];
+        // PRELOAD ESSENTIAL FRAMES FIRST
+        const CRITICAL_FRAMES = 30;
+        let criticalIndices = [];
+        let backgroundIndices = [];
         
-        setTimeout(() => {
-          if (!isMounted) return;
-          let listIndex = 0;
-          const loadBatch = () => {
-            if (!isMounted || listIndex >= loadList.length) return;
-            // Load in small batches to leave network open for Works/Contact videos
-            const batchSize = 6;
-            for (let b = 0; b < batchSize && listIndex < loadList.length; b++, listIndex++) {
-              const frameNum = loadList[listIndex];
-              const img = new window.Image();
-              const paddedIndex = frameNum.toString().padStart(3, '0');
-              img.src = `/images/herosection/ezgif-frame-${paddedIndex}.png`;
-              imagesRef.current[frameNum] = img;
-            }
-            setTimeout(loadBatch, 30); 
+        for (let i = 2; i <= TOTAL_FRAMES; i++) {
+          if (i <= CRITICAL_FRAMES) {
+            criticalIndices.push(i);
+          } else {
+            backgroundIndices.push(i);
+          }
+        }
+        
+        let loadedCriticalCount = 0;
+        const totalCritical = criticalIndices.length;
+
+        // Load critical frames immediately to show progress
+        criticalIndices.forEach((frameNum) => {
+          const img = new window.Image();
+          const paddedIndex = frameNum.toString().padStart(3, '0');
+          img.src = `/images/herosection-webp/ezgif-frame-${paddedIndex}.webp`;
+          img.onload = () => {
+             if (!isMounted) return;
+             loadedCriticalCount++;
+             setProgress(Math.round((loadedCriticalCount / totalCritical) * 100));
+             imagesRef.current[frameNum] = img;
+             
+             // When all critical frames are loaded, remove loader and load the rest quietly
+             if (loadedCriticalCount === totalCritical) {
+                setIsLoading(false);
+                
+                // Background load remaining frames
+                let listIndex = 0;
+                const loadDetailedBatch = () => {
+                  if (!isMounted || listIndex >= backgroundIndices.length) return;
+                  const batchSize = 5;
+                  for (let b = 0; b < batchSize && listIndex < backgroundIndices.length; b++, listIndex++) {
+                    const dFrame = backgroundIndices[listIndex];
+                    const dImg = new window.Image();
+                    const dPaddedIndex = dFrame.toString().padStart(3, '0');
+                    dImg.src = `/images/herosection-webp/ezgif-frame-${dPaddedIndex}.webp`;
+                    imagesRef.current[dFrame] = dImg;
+                  }
+                  setTimeout(loadDetailedBatch, 50);
+                };
+                setTimeout(loadDetailedBatch, 500);
+             }
           };
-          loadBatch();
-        }, 300); // Small 0.3s delay is enough to let Works images & Contact video start downloading
+          img.onerror = () => {
+             // fallback to prevent infinite loading
+             if (!isMounted) return;
+             loadedCriticalCount++;
+             setProgress(Math.round((loadedCriticalCount / totalCritical) * 100));
+             if (loadedCriticalCount === totalCritical) setIsLoading(false);
+          };
+        });
       };
     };
     loadImages();
@@ -171,6 +200,34 @@ export default function Home() {
       ref={containerRef} 
       className="h-[300vh] relative w-full bg-black"
     >
+      {/* Modern Preloader Overlay */}
+      <AnimatePresence>
+        {isLoading && (
+          <motion.div 
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+            className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black"
+          >
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-white text-2xl md:text-4xl font-extrabold tracking-widest mb-8"
+            >
+              MARJAN<span className="text-blue-500">.</span>
+            </motion.div>
+            <div className="w-64 h-1 bg-white/20 rounded-full overflow-hidden">
+              <motion.div 
+                className="h-full bg-blue-500"
+                initial={{ width: "0%" }}
+                animate={{ width: `${progress}%` }}
+                transition={{ ease: "easeOut", duration: 0.3 }}
+              />
+            </div>
+            <p className="text-gray-400 mt-4 text-sm font-medium tracking-widest">{progress}%</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="sticky top-0 w-full h-screen overflow-hidden flex flex-col justify-center items-center bg-black">
         <motion.canvas 
           ref={canvasRef} 
