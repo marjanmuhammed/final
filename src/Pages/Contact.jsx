@@ -61,6 +61,7 @@ export default function Contact() {
         muted
         loop
         playsInline
+        preload="auto"
         className="fixed top-0 left-0 w-full h-full object-cover -z-10"
       >
         <source src="/contact-bg.mp4" type="video/mp4" />
@@ -85,11 +86,12 @@ export default function Contact() {
           transition={{ duration: 0.6 }}
         >
           <video
-            src="/video/Screen Recording 1947-03-01 at 5.21.57 PM.mov"
+            src="/video/screen-recording.mov"
             autoPlay
             muted
             loop
             playsInline
+            preload="auto"
             className="w-full h-full object-cover rounded-full bg-transparent"
             style={{
               transformStyle: "preserve-3d",
@@ -205,11 +207,12 @@ export default function Contact() {
           transition={{ duration: 0.6 }}
         >
          <video
-  src="/video/Screen Recording 1947-03-01 at 5.21.57 PM.mov"
+  src="/video/screen-recording.mov"
   autoPlay
   muted
   loop
   playsInline
+  preload="auto"
   className="w-full h-full object-cover rounded-full bg-transparent"
   style={{
     transformStyle: "preserve-3d",
