@@ -1,16 +1,573 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
-    
-    <!-- Preload Critical Images for Hero -->
-    <link rel="preload" href="/images/herosection-webp/ezgif-frame-001.webp" as="image" fetchpriority="high" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vite + React</title>
+
+  <!-- Preload Critical Images for Hero -->
+  <link rel="preload" href="/images/herosection-webp/ezgif-frame-001.webp" as="image" fetchpriority="high" />
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+
+  <!-- MARJAN'S ADVANCED AI CHATBOT -->
+  <div id="marjan-chatbot-container">
+    <button id="chatbot-toggle" aria-label="Open Chatbot">
+      <div class="cube">
+        <div class="face front">M</div>
+        <div class="face back">AI</div>
+        <div class="face right"></div>
+        <div class="face left"></div>
+        <div class="face top"></div>
+        <div class="face bottom"></div>
+      </div>
+      <div class="pulse-ring"></div>
+    </button>
+
+    <div id="chatbot-window" class="hidden">
+      <div class="chat-header">
+        <div class="header-info">
+          <div class="status-dot"></div>
+          <div class="header-text">
+            <span class="title">🤖 Marjan's Assistant</span>
+            <span class="subtitle">Always Online</span>
+          </div>
+        </div>
+        <button id="close-chat" aria-label="Close Chat">&times;</button>
+      </div>
+
+      <div id="chat-messages" class="chat-body">
+        <div class="message bot-message" id="welcome-msg">
+          Hello! I'm Marjan's AI Assistant. How can I help you explore Marjan's portfolio today?
+        </div>
+      </div>
+
+      <div class="chat-footer">
+        <div id="suggested-chips" class="chips-container">
+          <button class="chip" data-query="Tell me about yourself">📖 About the Developer</button>
+          <button class="chip" data-query="What skills do you have?">💻 Skills</button>
+          <button class="chip" data-query="What projects have you done?">📂 Projects</button>
+        </div>
+        <div class="input-area">
+          <textarea id="chat-input" placeholder="Ask anything..." rows="1" autocomplete="off"></textarea>
+          <div class="input-actions">
+            <button id="send-btn">
+              <svg viewBox="0 0 24 24" width="20" height="20"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="currentColor"></path></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    :root {
+      --chat-neon: #00f2fe;
+      --chat-glow: rgba(0, 242, 254, 0.5);
+      --chat-bg: rgba(10, 10, 15, 0.85);
+      --chat-card: rgba(255, 255, 255, 0.05);
+    }
+
+    #marjan-chatbot-container {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      z-index: 10000;
+      font-family: 'Inter', -apple-system, sans-serif;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 1s ease, transform 1s ease;
+      pointer-events: none;
+    }
+
+    #marjan-chatbot-container.loaded {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    #chatbot-toggle {
+      width: 70px;
+      height: 70px;
+      background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px var(--chat-glow);
+      transition: all 0.4s ease;
+      perspective: 1000px;
+      animation: breathe 3s infinite ease-in-out;
+    }
+
+    @keyframes breathe {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 20px var(--chat-glow); }
+      50% { transform: scale(1.05); box-shadow: 0 0 35px var(--chat-glow); }
+    }
+
+    .cube {
+      width: 32px;
+      height: 32px;
+      position: relative;
+      transform-style: preserve-3d;
+      animation: rotateCube 12s infinite linear;
+    }
+
+    .face {
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: white;
+      font-size: 14px;
+      backdrop-filter: blur(2px);
+    }
+
+    .front  { transform: translateZ(16px); }
+    .back   { transform: rotateY(180deg) translateZ(16px); }
+    .right  { transform: rotateY(90deg) translateZ(16px); }
+    .left   { transform: rotateY(-90deg) translateZ(16px); }
+    .top    { transform: rotateX(90deg) translateZ(16px); }
+    .bottom { transform: rotateX(-90deg) translateZ(16px); }
+
+    @keyframes rotateCube {
+      from { transform: rotateX(0deg) rotateY(0deg); }
+      to { transform: rotateX(360deg) rotateY(360deg); }
+    }
+
+    #chatbot-window {
+      position: absolute;
+      bottom: 85px;
+      right: 0;
+      width: 400px;
+      height: 550px;
+      background: var(--chat-bg);
+      backdrop-filter: blur(12px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 28px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
+      transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+      transform-origin: bottom right;
+    }
+
+    #chatbot-window.hidden { opacity: 0; transform: scale(0.85) translateY(30px); pointer-events: none; }
+
+    .chat-header {
+      padding: 24px;
+      background: rgba(255, 255, 255, 0.03);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .header-info { display: flex; align-items: center; gap: 12px; }
+    .header-text { display: flex; flex-direction: column; }
+    .header-text .title { font-weight: 700; color: white; font-size: 16px; }
+    .header-text .subtitle { font-size: 11px; color: #00ff88; opacity: 0.8; }
+    .status-dot { width: 10px; height: 10px; background: #00ff88; border-radius: 50%; box-shadow: 0 0 12px #00ff88; }
+
+    #close-chat {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: opacity 0.3s;
+    }
+    #close-chat:hover { opacity: 1; color: var(--chat-neon); }
+
+    .chat-body {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      scrollbar-width: none;
+    }
+
+    .message {
+      position: relative;
+      max-width: 85%;
+      padding: 14px 18px;
+      border-radius: 20px;
+      font-size: 14.5px;
+      line-height: 1.6;
+      word-wrap: break-word;
+      transition: transform 0.2s;
+    }
+
+    .bot-message {
+      align-self: flex-start;
+      background: rgba(255, 255, 255, 0.06);
+      color: #efefef;
+      border-bottom-left-radius: 4px;
+      cursor: pointer;
+    }
+
+    .user-message {
+      align-self: flex-end;
+      background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+      color: white;
+      border-bottom-right-radius: 4px;
+      box-shadow: 0 5px 15px rgba(0, 242, 254, 0.2);
+    }
+
+    .typing-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 20px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .bot-message.is-typing:hover .typing-overlay { opacity: 1; }
+    .resume-btn {
+      background: #00f2fe;
+      color: #000;
+      border: none;
+      padding: 5px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 2px;
+      height: 15px;
+      background: #00f2fe;
+      margin-left: 2px;
+      animation: blink 0.8s infinite;
+      vertical-align: middle;
+    }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+    .typing-indicator {
+      display: flex; gap: 4px; padding: 12px 18px; background: rgba(255,255,255,0.06); border-radius: 20px; width: fit-content; align-self: flex-start;
+    }
+    .dot { width: 6px; height: 6px; background: #00f2fe; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out; }
+    .dot:nth-child(1) { animation-delay: -0.32s; }
+    .dot:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+    .chat-footer { padding: 16px; background: rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 12px; }
+    .chips-container { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+    .chip { white-space: nowrap; padding: 7px 14px; background: var(--chat-card); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; color: #bbb; font-size: 12px; cursor: pointer; transition: 0.3s; }
+    .chip:hover { border-color: #00f2fe; color: white; background: rgba(255,255,255,0.08); }
+
+    .input-area {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 10px 14px;
+      border-radius: 22px;
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    #chat-input {
+      flex: 1; background: none; border: none; color: white; font-size: 14px; outline: none; resize: none; max-height: 100px; padding: 5px 0; font-family: inherit;
+    }
+
+    #send-btn { background: none; border: none; color: #00f2fe; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; }
+    #send-btn:hover { transform: scale(1.1); color: #4facfe; }
+
+    @media (max-width: 480px) {
+      #chatbot-window { width: calc(100vw - 40px); height: 500px; bottom: 80px; }
+    }
+
+    /* PROJECT CARDS IN CHAT */
+    .project-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .project-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: transform 0.3s;
+    }
+    .project-card:hover { transform: translateY(-2px); border-color: var(--chat-neon); }
+    .project-img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .project-card p {
+      padding: 8px;
+      font-size: 12px;
+      margin: 0;
+      line-height: 1.4;
+    }
+  </style>
+
+  <script>
+  (function() {
+    const PERSONAL_DATA = {
+      about: "Hello! I'm Muhammad Marjan K.K, a passionate Full Stack Developer with 1 year of experience building scalable and user-friendly web applications. Skilled in React, dotnet, and modern web technologies, I am continuously learning and improving my craft. Based in Calicut, Kerala, I enjoy turning complex problems into elegant solutions and working collaboratively in teams.",
+      info: {
+        fullName: "Muhammad Marjan KK",
+        role: "Full Stack Developer",
+        location: "Calicut, Kerala, India",
+        phone: "+91 7902480917",
+        email: "marjanmuhammad790@gmail.com",
+        education: "B.A. Economics from University of Calicut (2020-2023)",
+        freelance: "Yes, he is open for freelance work."
+      },
+      skills: "Core skills include: HTML, CSS, JavaScript, React, Tailwind, and C#.",
+      projects: `Here are some featured projects:
+        <div class="project-grid">
+          <div class="project-card">
+            <img src="/images/works-1.png" alt="7 Up Website" class="project-img">
+            <p><strong>7 Up Website</strong>: A vibrant and interactive design.</p>
+          </div>
+          <div class="project-card">
+            <img src="/images/works-2.png" alt="Booking Clone" class="project-img">
+            <p><strong>Booking.com Clone</strong>: Features advanced search and filtering.</p>
+          </div>
+          <div class="project-card">
+            <img src="/images/works-3.png" alt="Student Management" class="project-img">
+            <p><strong>Student Management System</strong>: A full-stack data management tool.</p>
+          </div>
+        </div>`,
+      services: "He offers Web Development (React & .NET), Hosting/Deployment, Maintenance, and Automation services."
+    };
+
+    const API_CONFIG = {
+      openRouter: "https://openrouter.ai/api/v1/chat/completions",
+      key: "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"
+    };
+
+    const elements = {
+      container: document.getElementById('marjan-chatbot-container'),
+      toggle: document.getElementById('chatbot-toggle'),
+      window: document.getElementById('chatbot-window'),
+      close: document.getElementById('close-chat'),
+      messages: document.getElementById('chat-messages'),
+      input: document.getElementById('chat-input'),
+      send: document.getElementById('send-btn'),
+      chips: document.getElementById('suggested-chips')
+    };
+
+    // Show chatbot after the loading animation finishes
+    window.addEventListener('loaderFinished', () => {
+      elements.container.classList.add('loaded');
+    });
+
+    let isBotTyping = false;
+    let messageQueue = [];
+    let currentTypingIndex = 0;
+    let typingInterval = null;
+    let currentMessageText = "";
+    let currentMessageElement = null;
+
+    elements.toggle.onclick = () => elements.window.classList.toggle('hidden');
+    elements.close.onclick = () => elements.window.classList.add('hidden');
+
+    elements.input.oninput = function() {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
+    };
+
+    elements.send.onclick = () => processUserSend();
+    elements.input.onkeydown = (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); processUserSend(); }
+    };
+
+    elements.chips.onclick = (e) => {
+      if (e.target.classList.contains('chip')) {
+        processUserSend(e.target.dataset.query);
+      }
+    };
+
+    function processUserSend(text) {
+      const query = text || elements.input.value.trim();
+      if (!query) return;
+      
+      // If bot is typing or paused, cancel the current typing and skip to the new question
+      if (isBotTyping) {
+        cancelTyping();
+      }
+
+      elements.input.value = "";
+      elements.input.style.height = "auto";
+      addMessage(query, 'user');
+      handleResponse(query);
+    }
+
+    function cancelTyping() {
+      if (typingInterval) {
+        clearInterval(typingInterval);
+        typingInterval = null;
+      }
+      isBotTyping = false;
+      if (currentMessageElement) {
+        // Finish the current message immediately
+        const textContent = currentMessageElement.querySelector('.text-content');
+        if (textContent) textContent.innerHTML = currentMessageText;
+        const cursor = currentMessageElement.querySelector('.cursor');
+        if (cursor) cursor.remove();
+        const overlay = currentMessageElement.querySelector('.typing-overlay');
+        if (overlay) overlay.remove();
+        currentMessageElement.classList.remove('is-typing');
+      }
+      messageQueue = []; // Clear queue to start fresh
+    }
+
+    function addMessage(text, sender) {
+      const div = document.createElement('div');
+      div.className = `message ${sender}-message`;
+      // Use innerHTML for bot messages to support project images/HTML
+      if (sender === 'bot') {
+        div.innerHTML = text;
+      } else {
+        div.innerText = text;
+      }
+      elements.messages.appendChild(div);
+      elements.messages.scrollTop = elements.messages.scrollHeight;
+      return div;
+    }
+
+    async function handleResponse(query) {
+      const responseText = await getLogicResponse(query);
+      startTyping(responseText);
+    }
+
+    function startTyping(text) {
+      isBotTyping = true;
+      currentMessageText = text;
+      currentTypingIndex = 0;
+      const indicator = showIndicator();
+      setTimeout(() => {
+        indicator.remove();
+        const msgEl = addMessage("", 'bot');
+        msgEl.classList.add('is-typing');
+        msgEl.innerHTML = '<span class="text-content"></span><span class="cursor"></span><div class="typing-overlay"><button class="resume-btn">Paused - Click to Resume</button></div>';
+        currentMessageElement = msgEl;
+        msgEl.onclick = () => {
+          if (isBotTyping) {
+            if (typingInterval) pauseTyping();
+            else resumeTyping();
+          }
+        };
+        runTypingLoop();
+      }, 800);
+    }
+
+    function runTypingLoop() {
+      if (!isBotTyping) return;
+      const textContent = currentMessageElement.querySelector('.text-content');
+      typingInterval = setInterval(() => {
+        if (currentTypingIndex < currentMessageText.length) {
+          const char = currentMessageText.charAt(currentTypingIndex);
+          // If we encounter a tag, skip the typing effect for it to avoid broken HTML
+          if (char === '<') {
+            const endTag = currentMessageText.indexOf('>', currentTypingIndex);
+            if (endTag !== -1) {
+              textContent.innerHTML += currentMessageText.substring(currentTypingIndex, endTag + 1);
+              currentTypingIndex = endTag + 1;
+              return;
+            }
+          }
+          textContent.innerHTML += char;
+          currentTypingIndex++;
+          elements.messages.scrollTop = elements.messages.scrollHeight;
+        } else {
+          finishTyping();
+        }
+      }, 25);
+    }
+
+    function pauseTyping() {
+      clearInterval(typingInterval);
+      typingInterval = null;
+      currentMessageElement.querySelector('.typing-overlay').style.opacity = "1";
+      currentMessageElement.querySelector('.cursor').style.display = "none";
+    }
+
+    function resumeTyping() {
+      currentMessageElement.querySelector('.typing-overlay').style.opacity = "0";
+      currentMessageElement.querySelector('.cursor').style.display = "inline-block";
+      runTypingLoop();
+    }
+
+    function finishTyping() {
+      clearInterval(typingInterval);
+      typingInterval = null;
+      isBotTyping = false;
+      currentMessageElement.classList.remove('is-typing');
+      currentMessageElement.querySelector('.cursor').remove();
+      currentMessageElement.querySelector('.typing-overlay').remove();
+      if (messageQueue.length > 0) startTyping(messageQueue.shift());
+    }
+
+    function showIndicator() {
+      const div = document.createElement('div');
+      div.className = 'typing-indicator';
+      div.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+      elements.messages.appendChild(div);
+      elements.messages.scrollTop = elements.messages.scrollHeight;
+      return div;
+    }
+
+    async function getLogicResponse(input) {
+      const low = input.toLowerCase();
+      if (low.includes("tell me about yourself") || low.includes("who are you")) return PERSONAL_DATA.about;
+      if (low.includes("skill")) return PERSONAL_DATA.skills;
+      if (low.includes("project")) return PERSONAL_DATA.projects;
+      if (low.includes("service")) return PERSONAL_DATA.services;
+      if (low.includes("contact") || low.includes("email") || low.includes("phone")) 
+        return `You can contact the developer via email at ${PERSONAL_DATA.info.email} or call him at ${PERSONAL_DATA.info.phone}. He is located in ${PERSONAL_DATA.info.location}.`;
+      if (low.includes("education") || low.includes("degree")) return `He completed his ${PERSONAL_DATA.info.education}.`;
+      if (low.includes("freelance") || low.includes("open for work")) return PERSONAL_DATA.info.freelance;
+      return await fetchAI(input);
+    }
+
+    async function fetchAI(input) {
+      try {
+        const res = await fetch(API_CONFIG.openRouter, {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${API_CONFIG.key}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "google/gemini-2.0-flash-exp:free",
+            messages: [
+              { role: "system", content: `You are a helpful AI for a portfolio website. The developer is a Full Stack expert. Today is ${new Date().toLocaleString()}. Answer general questions accurately. Use pronouns like "he" or "the developer" instead of repeating "Marjan" too often. Keep responses professional.` },
+              { role: "user", content: input }
+            ]
+          })
+        });
+        const data = await res.json();
+        return data.choices[0].message.content;
+      } catch (e) { return "I'm currently offline for general questions. Ask about the developer's work!"; }
+    }
+  })();
+  </script>
+</body>
+
 </html>

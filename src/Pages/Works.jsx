@@ -119,6 +119,3 @@ export default function Work() {
     </div>
   );
 }
-
-
-////////////////////

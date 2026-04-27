@@ -8,6 +8,7 @@ import Work from "./Pages/Works";
 import Resume from "./Pages/Resume";
 import Contact from "./Pages/Contact";
 import Footer from "./Pages/Footer";
+import Hummingbird from "./components/Hummingbird";
 
 
 
@@ -69,6 +70,7 @@ export default function App() {
   return (
     <>
       <Particles id="tsparticles" init={particlesInit} options={particlesOptions} />
+      <Hummingbird />
       <Navbar />
       <main className="relative">
         <section id="home"><Home /></section>

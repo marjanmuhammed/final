@@ -4,9 +4,47 @@ import { motion } from "framer-motion";
 import emailjs from "emailjs-com";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Hyperspeed from "../components/Hyperspeed";
+import Terminal from "../components/Terminal";
 
 export default function Contact() {
   const form = useRef();
+
+  const hyperspeedOptions = {
+    distortion: 'turbulentDistortion',
+    length: 400,
+    roadWidth: 10,
+    islandWidth: 2,
+    lanesPerRoad: 4,
+    fov: 90,
+    fovSpeedUp: 150,
+    speedUp: 2,
+    carLightsFade: 0.4,
+    totalSideLightSticks: 20,
+    lightPairsPerRoadWay: 40,
+    shoulderLinesWidthPercentage: 0.05,
+    brokenLinesWidthPercentage: 0.1,
+    brokenLinesLengthPercentage: 0.5,
+    lightStickWidth: [0.12, 0.5],
+    lightStickHeight: [1.3, 1.7],
+    movingAwaySpeed: [60, 80],
+    movingCloserSpeed: [-120, -160],
+    carLightsLength: [400 * 0.03, 400 * 0.2],
+    carLightsRadius: [0.05, 0.14],
+    carWidthPercentage: [0.3, 0.5],
+    carShiftX: [-0.8, 0.8],
+    carFloorSeparation: [0, 5],
+    colors: {
+      roadColor: 0x080808,
+      islandColor: 0x0a0a0a,
+      background: 0x000000,
+      shoulderLines: 0xffffff,
+      brokenLines: 0xffffff,
+      leftCars: [0xd856bf, 0x6750a2, 0xc247ac],
+      rightCars: [0x03b3c3, 0x0e5ea5, 0x324555],
+      sticks: 0x03b3c3
+    }
+  };
 
   const sendEmail = (e) => {
     e.preventDefault();
@@ -50,9 +88,9 @@ export default function Contact() {
     {
       icon: <FaEnvelope />,
       title: "Email Us",
-      text: <>marjanmuhammad790<br/>@gmail.com</>,
+      text: <>marjanmuhammad790<br />@gmail.com</>,
     }
-    
+
   ];
 
   return (
@@ -74,34 +112,9 @@ export default function Contact() {
       <div className="fixed top-0 left-0 w-full h-full bg-black/40 -z-5" />
 
       {/* Main Section */}
-      <main className="relative max-w-7xl mx-auto bg-black/40 rounded-lg shadow-lg px-6 md:px-12 py-16 flex flex-col md:flex-row items-start gap-12">
+      <main className="relative max-w-7xl mx-auto bg-black/40 rounded-lg shadow-lg px-6 md:px-12 py-16 flex flex-col-reverse md:flex-row items-center gap-12 lg:gap-24">
 
-        {/* Mobile video on top */}
-        <motion.div
-          className="block md:hidden w-full max-w-md mx-auto mb-8 rounded-full aspect-square overflow-hidden shadow-xl"
-          style={{
-            boxShadow: "0 0 80px rgba(255, 255, 255, 0.1)",
-            backdropFilter: "blur(4px)",
-          }}
-          initial={{ opacity: 0, scale: 0.9 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6 }}
-        >
-          <video
-            src="/video/screen-recording.mov"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
-            className="w-full h-full object-cover rounded-full bg-transparent"
-            style={{
-              transformStyle: "preserve-3d",
-            }}
-          />
-        </motion.div>
-
-        {/* Left Section */}
+        {/* Left Section (Form) */}
         <div className="flex-1 w-full max-w-xl space-y-12 z-20">
           <motion.h2
             className="text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-blue-300 via-pink-300 to-purple-400 bg-clip-text text-transparent drop-shadow-lg"
@@ -145,48 +158,53 @@ export default function Contact() {
           </div>
 
           {/* Contact Form */}
-          <div className="p-8 rounded-xl bg-black/30 backdrop-blur-md border border-white/30">
-            <form ref={form} onSubmit={sendEmail} className="space-y-6">
+          <div className="relative p-8 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden group">
+            {/* Hyperspeed Effect Background */}
+            <div className="absolute inset-0 z-0 opacity-60 pointer-events-none">
+              <Hyperspeed effectOptions={hyperspeedOptions} />
+            </div>
+
+            <form ref={form} onSubmit={sendEmail} className="relative z-10 space-y-6">
               <div>
-                <label className="block text-white font-medium mb-1">
+                <label className="block text-white/80 font-medium mb-1.5 text-sm uppercase tracking-wider">
                   Your Name
                 </label>
                 <input
                   type="text"
                   name="user_name"
                   required
-                  className="w-full px-4 py-2 rounded-md bg-transparent text-white placeholder-gray-400 border border-white focus:outline-none focus:ring-2 focus:ring-white"
-                  placeholder="Enter your name"
+                  className="w-full px-5 py-3 rounded-xl bg-white/5 text-white placeholder-white/30 border border-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300"
+                  placeholder="Name"
                 />
               </div>
               <div>
-                <label className="block text-white font-medium mb-1">
+                <label className="block text-white/80 font-medium mb-1.5 text-sm uppercase tracking-wider">
                   Your Email
                 </label>
                 <input
                   type="email"
                   name="user_email"
                   required
-                  className="w-full px-4 py-2 rounded-md bg-transparent text-white placeholder-gray-400 border border-white focus:outline-none focus:ring-2 focus:ring-white"
-                  placeholder="Enter your email"
+                  className="w-full px-5 py-3 rounded-xl bg-white/5 text-white placeholder-white/30 border border-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300"
+                  placeholder="hello@example.com"
                 />
               </div>
               <div>
-                <label className="block text-white font-medium mb-1">
+                <label className="block text-white/80 font-medium mb-1.5 text-sm uppercase tracking-wider">
                   Message
                 </label>
                 <textarea
                   name="message"
-                  rows="5"
+                  rows="4"
                   required
-                  className="w-full px-4 py-2 rounded-md bg-transparent text-white placeholder-gray-400 border border-white focus:outline-none focus:ring-2 focus:ring-white"
-                  placeholder="Write your message here..."
+                  className="w-full px-5 py-3 rounded-xl bg-white/5 text-white placeholder-white/30 border border-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 resize-none"
+                  placeholder="Text Here..."
                 ></textarea>
               </div>
-              <div className="flex justify-center">
+              <div className="flex justify-center pt-2">
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-blue-500 text-white font-semibold rounded-md border border-blue-500 transition-colors duration-300"
+                  className="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 uppercase tracking-widest text-sm"
                 >
                   Send Message
                 </button>
@@ -195,32 +213,16 @@ export default function Contact() {
           </div>
         </div>
 
-        {/* Right Section: Rounded Video for desktop */}
+        {/* Right Section (Terminal Loop) */}
         <motion.div
-          className="hidden md:block absolute right-10 top-1/2 transform -translate-y-1/2 rounded-full aspect-square overflow-hidden shadow-xl"
-          style={{
-            width: "550px",
-            boxShadow: "0 0 80px rgb(0,0,0)",
-            backdropFilter: "blur(4px)",
-            zIndex: 10,
-          }}
-          initial={{ opacity: 0, scale: 0.9 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6 }}
+          className="w-full md:flex-1 h-[250px] md:h-[500px] z-10 flex justify-center items-center"
+          initial={{ opacity: 0, x: 50 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8 }}
         >
-         <video
-  src="/video/screen-recording.mov"
-  autoPlay
-  muted
-  loop
-  playsInline
-  preload="auto"
-  className="w-full h-full object-cover rounded-full bg-transparent"
-  style={{
-    transformStyle: "preserve-3d",
-  }}
-/>
-
+          <div className="w-full h-full max-w-[700px] bg-black/20 rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+            <Terminal />
+          </div>
         </motion.div>
       </main>
 

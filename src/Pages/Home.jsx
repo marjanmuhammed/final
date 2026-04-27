@@ -4,7 +4,7 @@ import Lottie from "lottie-react";
 
 // Import the Lottie animation JSON file
 // Make sure to place your converted JSON file in the public folder or import it directly
-import evolutionAnimationData from "../../public/loading/evolution.mp4.json";
+import evolutionAnimationData from "../loading/evolution.json";
 
 const roles = ["Full Stack Developer", "Freelancer", "Designer"];
 
@@ -35,6 +35,16 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [showLottieLoader, isAnimationFinished, isFirstVisit]);
 
+  // Signal for Chatbot to appear after loader finishes
+  useEffect(() => {
+    const isLoaderVisible = showLottieLoader && (isLoading || !isAnimationFinished);
+    if (!isLoaderVisible) {
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('loaderFinished'));
+      }, 800);
+    }
+  }, [showLottieLoader, isAnimationFinished, isLoading]);
+
   // Handle returning users - show for 3 seconds as requested
   useEffect(() => {
     if (!isFirstVisit) {
@@ -47,7 +57,7 @@ export default function Home() {
   }, [isFirstVisit]);
 
   // --- High-End Playback Animation (Scroll Canvas) ---
-  const TOTAL_FRAMES = 120;
+  const TOTAL_FRAMES = 240;
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const imagesRef = useRef([]);
@@ -66,66 +76,36 @@ export default function Home() {
     let isMounted = true;
 
     const loadImages = () => {
-      const firstImg = new window.Image();
-      firstImg.src = `/images/herosection-webp/ezgif-frame-001.webp`;
-      firstImg.onload = () => {
-        if (!isMounted) return;
-        imagesRef.current[1] = firstImg;
-        renderFrame(1);
+      let loadedCount = 0;
+      const totalImages = TOTAL_FRAMES;
 
-        const CRITICAL_FRAMES = 10;
-        let criticalIndices = [];
-        let backgroundIndices = [];
+      for (let i = 1; i <= TOTAL_FRAMES; i++) {
+        const img = new window.Image();
+        const paddedIndex = i.toString().padStart(3, '0');
+        img.src = `/images/herosection-webp/ezgif-frame-${paddedIndex}.webp`;
+        
+        img.onload = () => {
+          if (!isMounted) return;
+          imagesRef.current[i] = img;
+          loadedCount++;
+          
+          const currentProgress = Math.round((loadedCount / totalImages) * 100);
+          setProgress(currentProgress);
 
-        for (let i = 2; i <= TOTAL_FRAMES; i++) {
-          if (i <= CRITICAL_FRAMES) {
-            criticalIndices.push(i);
-          } else {
-            backgroundIndices.push(i);
+          // Render the first frame as soon as it's ready
+          if (i === 1) renderFrame(1);
+
+          if (loadedCount === totalImages) {
+            setIsLoading(false);
           }
-        }
+        };
 
-        let loadedCriticalCount = 0;
-        const totalCritical = criticalIndices.length;
-
-        criticalIndices.forEach((frameNum) => {
-          const img = new window.Image();
-          const paddedIndex = frameNum.toString().padStart(3, '0');
-          img.fetchPriority = "high";
-          img.src = `/images/herosection-webp/ezgif-frame-${paddedIndex}.webp`;
-          img.onload = () => {
-            if (!isMounted) return;
-            loadedCriticalCount++;
-            setProgress(Math.round((loadedCriticalCount / totalCritical) * 100));
-            imagesRef.current[frameNum] = img;
-
-            if (loadedCriticalCount === totalCritical) {
-              setIsLoading(false);
-              let listIndex = 0;
-              const loadDetailedBatch = () => {
-                if (!isMounted || listIndex >= backgroundIndices.length) return;
-                const batchSize = 8;
-                for (let b = 0; b < batchSize && listIndex < backgroundIndices.length; b++, listIndex++) {
-                  const dFrame = backgroundIndices[listIndex];
-                  const dImg = new window.Image();
-                  dImg.fetchPriority = "low";
-                  const dPaddedIndex = dFrame.toString().padStart(3, '0');
-                  dImg.src = `/images/herosection-webp/ezgif-frame-${dPaddedIndex}.webp`;
-                  imagesRef.current[dFrame] = dImg;
-                }
-                setTimeout(loadDetailedBatch, 30);
-              };
-              setTimeout(loadDetailedBatch, 100);
-            }
-          };
-          img.onerror = () => {
-            if (!isMounted) return;
-            loadedCriticalCount++;
-            setProgress(Math.round((loadedCriticalCount / totalCritical) * 100));
-            if (loadedCriticalCount === totalCritical) setIsLoading(false);
-          };
-        });
-      };
+        img.onerror = () => {
+          if (!isMounted) return;
+          loadedCount++;
+          if (loadedCount === totalImages) setIsLoading(false);
+        };
+      }
     };
     loadImages();
 
@@ -258,7 +238,7 @@ export default function Home() {
                 />
               </div>
               <div className="text-white font-sans text-xs md:text-sm tracking-[0.2em] uppercase opacity-80 text-center">
-                Warning! Evolution in Progress
+                Evolution in Progress
                 <span className="tracking-normal inline-flex">
                   <motion.span
                     animate={{ opacity: [0, 1, 0] }}
