@@ -242,8 +242,11 @@ export default function Home() {
                 autoPlay
                 muted
                 playsInline
+                controls={false}
+                disablePictureInPicture
+                disableRemotePlayback
                 onEnded={handleVideoEnded}
-                className="w-full h-auto object-contain rounded-lg shadow-2xl mb-8"
+                className="w-full h-auto object-contain rounded-lg shadow-2xl mb-8 pointer-events-none select-none"
               />
               <div className="text-white font-sans text-xs md:text-sm tracking-[0.2em] uppercase opacity-80 text-center">
                 Warning! Evolution in Progress
