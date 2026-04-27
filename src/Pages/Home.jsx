@@ -13,6 +13,28 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
 
+  // Enforce autoplay for mobile browsers and handle low-power mode failures
+  const handleVideoRef = (element) => {
+    if (element) {
+      element.muted = true;
+      element.defaultMuted = true;
+      element.playsInline = true;
+      
+      const playPromise = element.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((error) => {
+          console.error("Autoplay prevented by browser:", error);
+          // Failsafe: if video cannot autoplay (e.g., Low Power Mode on iOS), 
+          // instantly finish the video sequence so the user isn't stuck on a frozen video.
+          setIsVideoFinished(true);
+          if (isFirstVisit) {
+            sessionStorage.setItem("hasSeenLoader", "true");
+          }
+        });
+      }
+    }
+  };
+
   useEffect(() => {
     if (!isFirstVisit) {
       // Force end after 3 seconds on refresh for returning users
@@ -238,6 +260,7 @@ export default function Home() {
               className="w-full max-w-md md:max-w-xl px-6 flex flex-col items-center"
             >
               <video
+                ref={handleVideoRef}
                 src="/loading/evolution.mp4"
                 autoPlay
                 muted
