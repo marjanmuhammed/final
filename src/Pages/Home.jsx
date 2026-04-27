@@ -12,31 +12,61 @@ export default function Home() {
   const [showVideoLoader, setShowVideoLoader] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
+  const videoRef = useRef(null);
 
-  const handleWrapperRef = (element) => {
-    if (element) {
-      const videoElement = element.querySelector('video');
-      if (videoElement) {
-        videoElement.addEventListener('ended', handleVideoEnded);
+  // Handle video element once it's mounted
+  useEffect(() => {
+    if (videoRef.current && showVideoLoader && (!isVideoFinished || isLoading)) {
+      const videoElement = videoRef.current;
+
+      const playVideo = () => {
         const playPromise = videoElement.play();
         if (playPromise !== undefined) {
-          playPromise.catch((error) => {
-            console.error("Autoplay prevented by browser:", error);
-            setIsVideoFinished(true);
-            if (isFirstVisit) {
-              sessionStorage.setItem("hasSeenLoader", "true");
-            }
-          });
+          playPromise
+            .then(() => {
+              console.log("Video playing successfully");
+            })
+            .catch((error) => {
+              console.error("Autoplay prevented:", error);
+              // Force finish loader if autoplay fails
+              setIsVideoFinished(true);
+              if (isFirstVisit) {
+                sessionStorage.setItem("hasSeenLoader", "true");
+              }
+            });
         }
-      }
+      };
+
+      const handleCanPlay = () => {
+        playVideo();
+      };
+
+      const handleEnded = () => {
+        setIsVideoFinished(true);
+        if (isFirstVisit) {
+          sessionStorage.setItem("hasSeenLoader", "true");
+        }
+      };
+
+      videoElement.addEventListener('canplay', handleCanPlay);
+      videoElement.addEventListener('ended', handleEnded);
+
+      // Try to play immediately as well
+      playVideo();
+
+      return () => {
+        videoElement.removeEventListener('canplay', handleCanPlay);
+        videoElement.removeEventListener('ended', handleEnded);
+      };
     }
-  };
+  }, [showVideoLoader, isVideoFinished, isLoading, isFirstVisit]);
 
   useEffect(() => {
     if (!isFirstVisit) {
       // Force end after 3 seconds on refresh for returning users
       const timer = setTimeout(() => {
         setIsVideoFinished(true);
+        setShowVideoLoader(false);
       }, 3000);
       return () => clearTimeout(timer);
     }
@@ -53,9 +83,6 @@ export default function Home() {
     offset: ["start start", "end end"]
   });
 
-  // Removed useSpring to fix the "slow response" and "have to scroll continuously" issue.
-  // Direct mapping gives immediate 1:1 hardware-accelerated feedback like Apple's website.
-  // This also instantly resets the animation to the first image when navigating back.
   const frameIndex = useTransform(scrollYProgress, [0, 1], [1, TOTAL_FRAMES]);
 
   const canvasZoom = useTransform(scrollYProgress, [0, 1], [1.15, 1]);
@@ -114,18 +141,17 @@ export default function Home() {
                 for (let b = 0; b < batchSize && listIndex < backgroundIndices.length; b++, listIndex++) {
                   const dFrame = backgroundIndices[listIndex];
                   const dImg = new window.Image();
-                  dImg.fetchPriority = "low"; // Tell browser not to block main thread/network with these
+                  dImg.fetchPriority = "low";
                   const dPaddedIndex = dFrame.toString().padStart(3, '0');
                   dImg.src = `/images/herosection-webp/ezgif-frame-${dPaddedIndex}.webp`;
                   imagesRef.current[dFrame] = dImg;
                 }
-                setTimeout(loadDetailedBatch, 30); // Faster background loading
+                setTimeout(loadDetailedBatch, 30);
               };
               setTimeout(loadDetailedBatch, 100);
             }
           };
           img.onerror = () => {
-            // fallback to prevent infinite loading
             if (!isMounted) return;
             loadedCriticalCount++;
             setProgress(Math.round((loadedCriticalCount / totalCritical) * 100));
@@ -144,13 +170,11 @@ export default function Home() {
   const renderFrame = (idx) => {
     if (!canvasRef.current) return;
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d", { alpha: false }); // Disable alpha for better performance
+    const ctx = canvas.getContext("2d", { alpha: false });
 
     const roundedIdx = Math.min(TOTAL_FRAMES, Math.max(1, Math.round(idx)));
     const img = imagesRef.current[roundedIdx];
 
-    // Fallback: If scrolling extremely fast and image isn't loaded yet, 
-    // find the nearest loaded image to prevent blank screen drops (FPS fix).
     if (!img || !img.complete) {
       let fallbackImg = null;
       for (let i = roundedIdx; i >= 1; i--) {
@@ -168,14 +192,12 @@ export default function Home() {
   };
 
   const drawToCanvas = (canvas, ctx, img) => {
-    // Match canvas to window resolution while accounting for device pixel ratio (Clarity Fix)
     const dpr = window.devicePixelRatio || 1;
     canvas.width = window.innerWidth * dpr;
     canvas.height = window.innerHeight * dpr;
     canvas.style.width = `${window.innerWidth}px`;
     canvas.style.height = `${window.innerHeight}px`;
 
-    // Scale the context to account for DPR
     ctx.scale(dpr, dpr);
 
     const canvasRatio = window.innerWidth / window.innerHeight;
@@ -183,7 +205,6 @@ export default function Home() {
     let drawWidth = window.innerWidth;
     let drawHeight = window.innerHeight;
 
-    // Mobile Responsive natural object-cover logic
     if (canvasRatio > imgRatio) {
       drawHeight = window.innerWidth / imgRatio;
     } else {
@@ -193,14 +214,12 @@ export default function Home() {
     const offsetX = (window.innerWidth - drawWidth) / 2;
     const offsetY = (window.innerHeight - drawHeight) / 2;
 
-    // Enhance image smoothing quality
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
 
     ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
   };
 
-  // Modern performant way to bind Framer Motion values to native APIs without React re-renders
   useMotionValueEvent(frameIndex, "change", (latest) => {
     requestAnimationFrame(() => renderFrame(latest));
   });
@@ -229,13 +248,6 @@ export default function Home() {
     }
   }, [charIndex, index]);
 
-  const handleVideoEnded = () => {
-    setIsVideoFinished(true);
-    if (isFirstVisit) {
-      sessionStorage.setItem("hasSeenLoader", "true");
-    }
-  };
-
   return (
     <div
       ref={containerRef}
@@ -256,23 +268,20 @@ export default function Home() {
               transition={{ duration: 0.8, ease: "easeOut" }}
               className="w-full max-w-md md:max-w-xl px-6 flex flex-col items-center"
             >
-              <div
-                ref={handleWrapperRef}
-                className="w-full mb-8 flex justify-center pointer-events-none select-none"
-                dangerouslySetInnerHTML={{
-                  __html: `
-                    <video
-                      src="/loading/evolution.mp4"
-                      autoplay
-                      muted
-                      playsinline
-                      disablepictureinpicture
-                      disableremoteplayback
-                      style="width: 100%; height: auto; object-fit: contain; border-radius: 0.5rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); pointer-events: none; user-select: none;"
-                    ></video>
-                  `
-                }}
-              />
+              <div className="w-full mb-8 flex justify-center pointer-events-none select-none">
+                <video
+                  ref={videoRef}
+                  src="/loading/evolution.mp4"
+                  muted
+                  playsInline
+                  autoPlay
+                  preload="auto"
+                  disablePictureInPicture
+                  disableRemotePlayback
+                  className="w-full h-auto object-contain rounded-lg shadow-2xl pointer-events-none select-none"
+                  style={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}
+                />
+              </div>
               <div className="text-white font-sans text-xs md:text-sm tracking-[0.2em] uppercase opacity-80 text-center">
                 Warning! Evolution in Progress
                 <span className="tracking-normal inline-flex">
