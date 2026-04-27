@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, useScroll, useTransform, useMotionValueEvent, AnimatePresence } from "framer-motion";
+import Lottie from "lottie-react";
+
+// Import the Lottie animation JSON file
+// Make sure to place your converted JSON file in the public folder or import it directly
+import evolutionAnimationData from "../../public/loading/evolution.mp4.json";
 
 const roles = ["Full Stack Developer", "Freelancer", "Designer"];
 
@@ -8,71 +13,40 @@ export default function Home() {
   const [displayedText, setDisplayedText] = useState("");
   const [charIndex, setCharIndex] = useState(0);
   const [isFirstVisit] = useState(() => sessionStorage.getItem("hasSeenLoader") !== "true");
-  const [isVideoFinished, setIsVideoFinished] = useState(false);
-  const [showVideoLoader, setShowVideoLoader] = useState(true);
+  const [isAnimationFinished, setIsAnimationFinished] = useState(false);
+  const [showLottieLoader, setShowLottieLoader] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
-  const videoRef = useRef(null);
 
-  // Handle video element once it's mounted
+
+  // --- Lottie Playback Handler ---
   useEffect(() => {
-    if (videoRef.current && showVideoLoader && (!isVideoFinished || isLoading)) {
-      const videoElement = videoRef.current;
+    if (!showLottieLoader || isAnimationFinished) return;
 
-      const playVideo = () => {
-        const playPromise = videoElement.play();
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => {
-              console.log("Video playing successfully");
-            })
-            .catch((error) => {
-              console.error("Autoplay prevented:", error);
-              // Force finish loader if autoplay fails
-              setIsVideoFinished(true);
-              if (isFirstVisit) {
-                sessionStorage.setItem("hasSeenLoader", "true");
-              }
-            });
-        }
-      };
+    // Set a timeout as a fallback to finish the loader
+    const animationDuration = 4000; 
+    const timer = setTimeout(() => {
+      setIsAnimationFinished(true);
+      if (isFirstVisit) {
+        sessionStorage.setItem("hasSeenLoader", "true");
+      }
+    }, animationDuration);
 
-      const handleCanPlay = () => {
-        playVideo();
-      };
+    return () => clearTimeout(timer);
+  }, [showLottieLoader, isAnimationFinished, isFirstVisit]);
 
-      const handleEnded = () => {
-        setIsVideoFinished(true);
-        if (isFirstVisit) {
-          sessionStorage.setItem("hasSeenLoader", "true");
-        }
-      };
-
-      videoElement.addEventListener('canplay', handleCanPlay);
-      videoElement.addEventListener('ended', handleEnded);
-
-      // Try to play immediately as well
-      playVideo();
-
-      return () => {
-        videoElement.removeEventListener('canplay', handleCanPlay);
-        videoElement.removeEventListener('ended', handleEnded);
-      };
-    }
-  }, [showVideoLoader, isVideoFinished, isLoading, isFirstVisit]);
-
+  // Handle returning users - show for 3 seconds as requested
   useEffect(() => {
     if (!isFirstVisit) {
-      // Force end after 3 seconds on refresh for returning users
       const timer = setTimeout(() => {
-        setIsVideoFinished(true);
-        setShowVideoLoader(false);
+        setIsAnimationFinished(true);
+        setShowLottieLoader(false);
       }, 3000);
       return () => clearTimeout(timer);
     }
   }, [isFirstVisit]);
 
-  // --- High-End Playback Animation ---
+  // --- High-End Playback Animation (Scroll Canvas) ---
   const TOTAL_FRAMES = 120;
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
@@ -84,7 +58,6 @@ export default function Home() {
   });
 
   const frameIndex = useTransform(scrollYProgress, [0, 1], [1, TOTAL_FRAMES]);
-
   const canvasZoom = useTransform(scrollYProgress, [0, 1], [1.15, 1]);
   const textOpacity = useTransform(scrollYProgress, [0, 0.15], [0, 1]);
   const textY = useTransform(scrollYProgress, [0, 0.15], [30, 0]);
@@ -92,7 +65,6 @@ export default function Home() {
   useEffect(() => {
     let isMounted = true;
 
-    // Progressive Loading: Load the first frame immediately to fix initial delay
     const loadImages = () => {
       const firstImg = new window.Image();
       firstImg.src = `/images/herosection-webp/ezgif-frame-001.webp`;
@@ -101,7 +73,6 @@ export default function Home() {
         imagesRef.current[1] = firstImg;
         renderFrame(1);
 
-        // PRELOAD ESSENTIAL FRAMES FIRST
         const CRITICAL_FRAMES = 10;
         let criticalIndices = [];
         let backgroundIndices = [];
@@ -117,7 +88,6 @@ export default function Home() {
         let loadedCriticalCount = 0;
         const totalCritical = criticalIndices.length;
 
-        // Load critical frames immediately to show progress
         criticalIndices.forEach((frameNum) => {
           const img = new window.Image();
           const paddedIndex = frameNum.toString().padStart(3, '0');
@@ -129,11 +99,8 @@ export default function Home() {
             setProgress(Math.round((loadedCriticalCount / totalCritical) * 100));
             imagesRef.current[frameNum] = img;
 
-            // When all critical frames are loaded, remove loader and load the rest quietly
             if (loadedCriticalCount === totalCritical) {
               setIsLoading(false);
-
-              // Background load remaining frames
               let listIndex = 0;
               const loadDetailedBatch = () => {
                 if (!isMounted || listIndex >= backgroundIndices.length) return;
@@ -198,6 +165,7 @@ export default function Home() {
     canvas.style.width = `${window.innerWidth}px`;
     canvas.style.height = `${window.innerHeight}px`;
 
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(dpr, dpr);
 
     const canvasRatio = window.innerWidth / window.innerHeight;
@@ -230,6 +198,7 @@ export default function Home() {
     return () => window.removeEventListener("resize", handleResize);
   }, [frameIndex]);
 
+  // Typing animation effect
   useEffect(() => {
     const currentWord = roles[index];
     if (charIndex < currentWord.length) {
@@ -248,14 +217,19 @@ export default function Home() {
     }
   }, [charIndex, index]);
 
+  // Handle loader exit
+  const handleLoaderExit = () => {
+    setShowLottieLoader(false);
+  };
+
   return (
     <div
       ref={containerRef}
       className="h-[300dvh] relative w-full bg-black"
     >
-      {/* High-End Evolution Preloader Overlay */}
+      {/* Lottie Animation Preloader Overlay */}
       <AnimatePresence>
-        {showVideoLoader && (isLoading || !isVideoFinished) && (
+        {showLottieLoader && (isLoading || !isAnimationFinished) && (
           <motion.div
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -269,17 +243,18 @@ export default function Home() {
               className="w-full max-w-md md:max-w-xl px-6 flex flex-col items-center"
             >
               <div className="w-full mb-8 flex justify-center pointer-events-none select-none">
-                <video
-                  ref={videoRef}
-                  src="/loading/evolution.mp4"
-                  muted
-                  playsInline
-                  autoPlay
-                  preload="auto"
-                  disablePictureInPicture
-                  disableRemotePlayback
-                  className="w-full h-auto object-contain rounded-lg shadow-2xl pointer-events-none select-none"
-                  style={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}
+                <Lottie
+                  animationData={evolutionAnimationData}
+                  loop={false}
+                  autoplay={true}
+                  onComplete={() => {
+                    setIsAnimationFinished(true);
+                    if (isFirstVisit) {
+                      sessionStorage.setItem("hasSeenLoader", "true");
+                    }
+                  }}
+                  style={{ width: '100%', height: 'auto' }}
+                  className="pointer-events-none select-none"
                 />
               </div>
               <div className="text-white font-sans text-xs md:text-sm tracking-[0.2em] uppercase opacity-80 text-center">
@@ -309,6 +284,7 @@ export default function Home() {
           </motion.div>
         )}
       </AnimatePresence>
+
       <div className="sticky top-0 w-full h-[100dvh] overflow-hidden flex flex-col justify-center items-center bg-black">
         <motion.canvas
           ref={canvasRef}
