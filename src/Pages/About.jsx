@@ -28,7 +28,7 @@ export default function About() {
   ];
 
   return (
-    <div className="relative min-h-screen font-montserrat text-white px-4 md:px-10 py-16 pt-20 overflow-hidden">
+    <div className="relative min-h-[100dvh] font-montserrat text-white px-4 md:px-10 py-16 pt-20 overflow-hidden">
 
       {/* Background Video */}
     

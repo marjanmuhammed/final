@@ -43,7 +43,7 @@ export default function Work() {
   };
 
   return (
-    <div className="relative min-h-screen text-white px-6 md:px-12 pt-24 pb-20 font-montserrat overflow-hidden">
+    <div className="relative min-h-[100dvh] text-white px-6 md:px-12 pt-24 pb-20 font-montserrat overflow-hidden">
       {/* 🔲 Background Video */}
 
       {/* 🟣 Overlay */}

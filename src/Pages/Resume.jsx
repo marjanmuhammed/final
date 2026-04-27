@@ -12,7 +12,7 @@ export default function Resume() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden pt-20 font-montserrat text-white">
+    <div className="relative min-h-[100dvh] overflow-x-hidden pt-20 font-montserrat text-white">
       {/* Background Video */}
      
 

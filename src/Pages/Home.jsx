@@ -7,8 +7,21 @@ export default function Home() {
   const [index, setIndex] = useState(0);
   const [displayedText, setDisplayedText] = useState("");
   const [charIndex, setCharIndex] = useState(0);
+  const [isFirstVisit] = useState(() => sessionStorage.getItem("hasSeenLoader") !== "true");
+  const [isVideoFinished, setIsVideoFinished] = useState(false);
+  const [showVideoLoader, setShowVideoLoader] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    if (!isFirstVisit) {
+      // Force end after 3 seconds on refresh for returning users
+      const timer = setTimeout(() => {
+        setIsVideoFinished(true);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [isFirstVisit]);
 
   // --- High-End Playback Animation ---
   const TOTAL_FRAMES = 120;
@@ -32,7 +45,7 @@ export default function Home() {
 
   useEffect(() => {
     let isMounted = true;
-    
+
     // Progressive Loading: Load the first frame immediately to fix initial delay
     const loadImages = () => {
       const firstImg = new window.Image();
@@ -41,12 +54,12 @@ export default function Home() {
         if (!isMounted) return;
         imagesRef.current[1] = firstImg;
         renderFrame(1);
-        
+
         // PRELOAD ESSENTIAL FRAMES FIRST
         const CRITICAL_FRAMES = 10;
         let criticalIndices = [];
         let backgroundIndices = [];
-        
+
         for (let i = 2; i <= TOTAL_FRAMES; i++) {
           if (i <= CRITICAL_FRAMES) {
             criticalIndices.push(i);
@@ -54,7 +67,7 @@ export default function Home() {
             backgroundIndices.push(i);
           }
         }
-        
+
         let loadedCriticalCount = 0;
         const totalCritical = criticalIndices.length;
 
@@ -65,39 +78,39 @@ export default function Home() {
           img.fetchPriority = "high";
           img.src = `/images/herosection-webp/ezgif-frame-${paddedIndex}.webp`;
           img.onload = () => {
-             if (!isMounted) return;
-             loadedCriticalCount++;
-             setProgress(Math.round((loadedCriticalCount / totalCritical) * 100));
-             imagesRef.current[frameNum] = img;
-             
-             // When all critical frames are loaded, remove loader and load the rest quietly
-             if (loadedCriticalCount === totalCritical) {
-                setIsLoading(false);
-                
-                // Background load remaining frames
-                let listIndex = 0;
-                const loadDetailedBatch = () => {
-                  if (!isMounted || listIndex >= backgroundIndices.length) return;
-                  const batchSize = 8;
-                  for (let b = 0; b < batchSize && listIndex < backgroundIndices.length; b++, listIndex++) {
-                    const dFrame = backgroundIndices[listIndex];
-                    const dImg = new window.Image();
-                    dImg.fetchPriority = "low"; // Tell browser not to block main thread/network with these
-                    const dPaddedIndex = dFrame.toString().padStart(3, '0');
-                    dImg.src = `/images/herosection-webp/ezgif-frame-${dPaddedIndex}.webp`;
-                    imagesRef.current[dFrame] = dImg;
-                  }
-                  setTimeout(loadDetailedBatch, 30); // Faster background loading
-                };
-                setTimeout(loadDetailedBatch, 100);
-             }
+            if (!isMounted) return;
+            loadedCriticalCount++;
+            setProgress(Math.round((loadedCriticalCount / totalCritical) * 100));
+            imagesRef.current[frameNum] = img;
+
+            // When all critical frames are loaded, remove loader and load the rest quietly
+            if (loadedCriticalCount === totalCritical) {
+              setIsLoading(false);
+
+              // Background load remaining frames
+              let listIndex = 0;
+              const loadDetailedBatch = () => {
+                if (!isMounted || listIndex >= backgroundIndices.length) return;
+                const batchSize = 8;
+                for (let b = 0; b < batchSize && listIndex < backgroundIndices.length; b++, listIndex++) {
+                  const dFrame = backgroundIndices[listIndex];
+                  const dImg = new window.Image();
+                  dImg.fetchPriority = "low"; // Tell browser not to block main thread/network with these
+                  const dPaddedIndex = dFrame.toString().padStart(3, '0');
+                  dImg.src = `/images/herosection-webp/ezgif-frame-${dPaddedIndex}.webp`;
+                  imagesRef.current[dFrame] = dImg;
+                }
+                setTimeout(loadDetailedBatch, 30); // Faster background loading
+              };
+              setTimeout(loadDetailedBatch, 100);
+            }
           };
           img.onerror = () => {
-             // fallback to prevent infinite loading
-             if (!isMounted) return;
-             loadedCriticalCount++;
-             setProgress(Math.round((loadedCriticalCount / totalCritical) * 100));
-             if (loadedCriticalCount === totalCritical) setIsLoading(false);
+            // fallback to prevent infinite loading
+            if (!isMounted) return;
+            loadedCriticalCount++;
+            setProgress(Math.round((loadedCriticalCount / totalCritical) * 100));
+            if (loadedCriticalCount === totalCritical) setIsLoading(false);
           };
         });
       };
@@ -113,23 +126,23 @@ export default function Home() {
     if (!canvasRef.current) return;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d", { alpha: false }); // Disable alpha for better performance
-    
+
     const roundedIdx = Math.min(TOTAL_FRAMES, Math.max(1, Math.round(idx)));
     const img = imagesRef.current[roundedIdx];
-    
+
     // Fallback: If scrolling extremely fast and image isn't loaded yet, 
     // find the nearest loaded image to prevent blank screen drops (FPS fix).
     if (!img || !img.complete) {
-        let fallbackImg = null;
-        for (let i = roundedIdx; i >= 1; i--) {
-            if (imagesRef.current[i] && imagesRef.current[i].complete) {
-                fallbackImg = imagesRef.current[i];
-                break;
-            }
+      let fallbackImg = null;
+      for (let i = roundedIdx; i >= 1; i--) {
+        if (imagesRef.current[i] && imagesRef.current[i].complete) {
+          fallbackImg = imagesRef.current[i];
+          break;
         }
-        if (!fallbackImg) return;
-        drawToCanvas(canvas, ctx, fallbackImg);
-        return;
+      }
+      if (!fallbackImg) return;
+      drawToCanvas(canvas, ctx, fallbackImg);
+      return;
     }
 
     drawToCanvas(canvas, ctx, img);
@@ -157,7 +170,7 @@ export default function Home() {
     } else {
       drawWidth = window.innerHeight * imgRatio;
     }
-    
+
     const offsetX = (window.innerWidth - drawWidth) / 2;
     const offsetY = (window.innerHeight - drawHeight) / 2;
 
@@ -197,44 +210,73 @@ export default function Home() {
     }
   }, [charIndex, index]);
 
+  const handleVideoEnded = () => {
+    setIsVideoFinished(true);
+    if (isFirstVisit) {
+      sessionStorage.setItem("hasSeenLoader", "true");
+    }
+  };
+
   return (
-    <div 
-      ref={containerRef} 
-      className="h-[300vh] relative w-full bg-black"
+    <div
+      ref={containerRef}
+      className="h-[300dvh] relative w-full bg-black"
     >
-      {/* Modern Preloader Overlay */}
+      {/* High-End Evolution Preloader Overlay */}
       <AnimatePresence>
-        {isLoading && (
-          <motion.div 
+        {showVideoLoader && (isLoading || !isVideoFinished) && (
+          <motion.div
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
+            transition={{ duration: 1.2, ease: "easeInOut" }}
             className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black"
           >
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-white text-2xl md:text-4xl font-extrabold tracking-widest mb-8"
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="w-full max-w-md md:max-w-xl px-6 flex flex-col items-center"
             >
-              MARJAN<span className="text-blue-500">.</span>
-            </motion.div>
-            <div className="w-64 h-1 bg-white/20 rounded-full overflow-hidden">
-              <motion.div 
-                className="h-full bg-blue-500"
-                initial={{ width: "0%" }}
-                animate={{ width: `${progress}%` }}
-                transition={{ ease: "easeOut", duration: 0.3 }}
+              <video
+                src="/loading/evolution.mp4"
+                autoPlay
+                muted
+                playsInline
+                onEnded={handleVideoEnded}
+                className="w-full h-auto object-contain rounded-lg shadow-2xl mb-8"
               />
-            </div>
-            <p className="text-gray-400 mt-4 text-sm font-medium tracking-widest">{progress}%</p>
+              <div className="text-white font-sans text-xs md:text-sm tracking-[0.2em] uppercase opacity-80 text-center">
+                Warning! Evolution in Progress
+                <span className="tracking-normal inline-flex">
+                  <motion.span
+                    animate={{ opacity: [0, 1, 0] }}
+                    transition={{ repeat: Infinity, duration: 1.5, delay: 0 }}
+                  >
+                    .
+                  </motion.span>
+                  <motion.span
+                    animate={{ opacity: [0, 1, 0] }}
+                    transition={{ repeat: Infinity, duration: 1.5, delay: 0.3 }}
+                  >
+                    .
+                  </motion.span>
+                  <motion.span
+                    animate={{ opacity: [0, 1, 0] }}
+                    transition={{ repeat: Infinity, duration: 1.5, delay: 0.6 }}
+                  >
+                    .
+                  </motion.span>
+                </span>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-      <div className="sticky top-0 w-full h-screen overflow-hidden flex flex-col justify-center items-center bg-black">
-        <motion.canvas 
-          ref={canvasRef} 
+      <div className="sticky top-0 w-full h-[100dvh] overflow-hidden flex flex-col justify-center items-center bg-black">
+        <motion.canvas
+          ref={canvasRef}
           style={{ scale: canvasZoom }}
-          className="absolute inset-0 w-full h-full z-0 object-cover pointer-events-none" 
+          className="absolute inset-0 w-full h-full z-0 object-cover pointer-events-none"
         />
         <div className="absolute inset-0 bg-black/50 z-0 pointer-events-none"></div>
 
