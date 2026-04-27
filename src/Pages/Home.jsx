@@ -13,24 +13,21 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
 
-  // Enforce autoplay for mobile browsers and handle low-power mode failures
-  const handleVideoRef = (element) => {
+  const handleWrapperRef = (element) => {
     if (element) {
-      element.muted = true;
-      element.defaultMuted = true;
-      element.playsInline = true;
-      
-      const playPromise = element.play();
-      if (playPromise !== undefined) {
-        playPromise.catch((error) => {
-          console.error("Autoplay prevented by browser:", error);
-          // Failsafe: if video cannot autoplay (e.g., Low Power Mode on iOS), 
-          // instantly finish the video sequence so the user isn't stuck on a frozen video.
-          setIsVideoFinished(true);
-          if (isFirstVisit) {
-            sessionStorage.setItem("hasSeenLoader", "true");
-          }
-        });
+      const videoElement = element.querySelector('video');
+      if (videoElement) {
+        videoElement.addEventListener('ended', handleVideoEnded);
+        const playPromise = videoElement.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((error) => {
+            console.error("Autoplay prevented by browser:", error);
+            setIsVideoFinished(true);
+            if (isFirstVisit) {
+              sessionStorage.setItem("hasSeenLoader", "true");
+            }
+          });
+        }
       }
     }
   };
@@ -259,17 +256,22 @@ export default function Home() {
               transition={{ duration: 0.8, ease: "easeOut" }}
               className="w-full max-w-md md:max-w-xl px-6 flex flex-col items-center"
             >
-              <video
-                ref={handleVideoRef}
-                src="/loading/evolution.mp4"
-                autoPlay
-                muted
-                playsInline
-                controls={false}
-                disablePictureInPicture
-                disableRemotePlayback
-                onEnded={handleVideoEnded}
-                className="w-full h-auto object-contain rounded-lg shadow-2xl mb-8 pointer-events-none select-none"
+              <div
+                ref={handleWrapperRef}
+                className="w-full mb-8 flex justify-center pointer-events-none select-none"
+                dangerouslySetInnerHTML={{
+                  __html: `
+                    <video
+                      src="/loading/evolution.mp4"
+                      autoplay
+                      muted
+                      playsinline
+                      disablepictureinpicture
+                      disableremoteplayback
+                      style="width: 100%; height: auto; object-fit: contain; border-radius: 0.5rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); pointer-events: none; user-select: none;"
+                    ></video>
+                  `
+                }}
               />
               <div className="text-white font-sans text-xs md:text-sm tracking-[0.2em] uppercase opacity-80 text-center">
                 Warning! Evolution in Progress
