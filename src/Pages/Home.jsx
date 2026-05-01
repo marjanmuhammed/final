@@ -4,6 +4,7 @@ import Lottie from "lottie-react";
 
 // Import the Lottie animation JSON file
 import evolutionAnimationData from "../loading/evolution.json";
+import { preloadAll, getCachedImage } from "../lib/preloader";
 
 const roles = ["Full Stack Developer", "Freelancer", "Designer"];
 
@@ -78,104 +79,41 @@ export default function Home() {
 
   useEffect(() => {
     let isMounted = true;
-    const images = [];
-    const loadingFallback = setTimeout(() => {
-      if (isMounted) setIsLoading(false);
-    }, IMAGE_LOAD_TIMEOUT);
-
-    const finishLoading = () => {
-      clearTimeout(loadingFallback);
-      if (isMounted) setIsLoading(false);
+    
+    const startPreload = async () => {
+      await preloadAll();
+      if (isMounted) {
+        setIsLoading(false);
+        renderFrame(1);
+      }
     };
 
-    const loadImages = async () => {
-      const pathTemplate = `/images/herosection-webp/ezgif-frame-{idx}.webp`;
-      const getPath = (idx) => pathTemplate.replace('{idx}', idx.toString().padStart(3, '0'));
-
-      // Phase 1: Load First Frame & Key Frames (every 15th frame)
-      const keyFrames = [];
-      for (let i = 1; i <= TOTAL_FRAMES; i += 15) keyFrames.push(i);
-      if (!keyFrames.includes(TOTAL_FRAMES)) keyFrames.push(TOTAL_FRAMES);
-
-      for (const i of keyFrames) {
-        if (!isMounted) return;
-        await new Promise((resolve) => {
-          const img = new Image();
-          img.src = getPath(i);
-          img.onload = () => {
-            images[i] = img;
-            if (i === 1) renderFrame(1, images);
-            resolve();
-          };
-          img.onerror = () => resolve();
-        });
-      }
-      setIsLoading(false); // Reveal the page once key frames are ready!
-
-      // Phase 2: Load the rest in batches
-      const batchSize = 8;
-      for (let i = 1; i <= TOTAL_FRAMES; i++) {
-        if (!isMounted) break;
-        if (images[i]) continue;
-
-        const batch = [];
-        for (let j = 0; j < batchSize && (i + j) <= TOTAL_FRAMES; j++) {
-          const frameIdx = i + j;
-          if (images[frameIdx]) continue;
-          batch.push(new Promise((resolve) => {
-            const img = new Image();
-            img.src = getPath(frameIdx);
-            img.onload = () => {
-              images[frameIdx] = img;
-              resolve();
-            };
-            img.onerror = () => resolve();
-          }));
-        }
-        await Promise.all(batch);
-        i += batchSize - 1;
-        await new Promise(r => setTimeout(r, 10)); // Yield to main thread
-      }
-      finishLoading();
-    };
-    loadImages();
-
-    window.heroImages = images;
+    startPreload();
 
     return () => {
       isMounted = false;
-      clearTimeout(loadingFallback);
     };
   }, []);
 
-  const renderFrame = (idx, forcedImages = null) => {
+  const renderFrame = (idx) => {
     if (!canvasRef.current) return;
-    const images = forcedImages || window.heroImages;
-    if (!images) return;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d", { alpha: false });
-
-    const roundedIdx = Math.min(TOTAL_FRAMES, Math.max(1, Math.round(idx)));
-    const img = images[roundedIdx];
-
-    if (!img || !img.complete) {
-      let fallbackImg = null;
-      for (let i = roundedIdx; i >= 1; i--) {
-        if (images[i] && images[i].complete) {
-          fallbackImg = images[i];
-          break;
+    const img = getCachedImage('hero', idx);
+    if (!img) {
+      // Fallback to nearest loaded frame
+      for (let i = Math.round(idx); i >= 1; i--) {
+        const cached = getCachedImage('hero', i);
+        if (cached) {
+          drawToCanvas(canvasRef.current, cached);
+          return;
         }
       }
-      if (!fallbackImg) return;
-      drawToCanvas(canvas, fallbackImg);
       return;
     }
-
-    drawToCanvas(canvas, img);
+    drawToCanvas(canvasRef.current, img);
   };
 
   const updateCanvasSize = (canvas) => {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2); // Cap DPR at 2 for performance
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const width = window.innerWidth;
     const height = window.innerHeight;
     
@@ -201,7 +139,11 @@ export default function Home() {
     const canvasHeight = window.innerHeight;
     const canvasRatio = canvasWidth / canvasHeight;
     const imgRatio = img.width / img.height;
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> 136a72b (Added the about section backround animation3)
     let drawWidth = canvasWidth;
     let drawHeight = canvasHeight;
 
@@ -215,7 +157,7 @@ export default function Home() {
     const offsetY = (canvasHeight - drawHeight) / 2;
 
     ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "medium"; // Use medium for better performance
+    ctx.imageSmoothingQuality = "medium";
 
     ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
   };

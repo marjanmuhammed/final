@@ -6,6 +6,7 @@ import {
   FaJs, FaReact, FaGitAlt, FaHashtag
 } from "react-icons/fa";
 import { SiTailwindcss, SiRedux } from "react-icons/si";
+import { getCachedImage } from "../lib/preloader";
 
 export default function About() {
   const containerRef = useRef(null);
@@ -24,114 +25,30 @@ export default function About() {
   const canvasOpacity = useTransform(scrollYProgress, [0, 0.01], [0, 1]);
 
   useEffect(() => {
-    let isMounted = true;
-    const images = [];
-    let loadedCount = 0;
-
-    const loadImages = async () => {
-      const paths = [
-        `/images/about-webp/ezgif-frame-{idx}.webp`,
-        `/images/about/ezgif-frame-{idx}.png` // Fallback
-      ];
-
-      const getPath = (idx, formatIdx) => paths[formatIdx].replace('{idx}', idx.toString().padStart(3, '0'));
-
-      // Check which format exists (try first frame)
-      let formatIdx = 0;
-      const probeImg = new Image();
-      probeImg.src = getPath(1, 0);
-      
-      const formatSupported = await new Promise((resolve) => {
-        probeImg.onload = () => resolve(0);
-        probeImg.onerror = () => resolve(1);
-      });
-      formatIdx = formatSupported;
-
-      // Phase 1: Load First Frame & Key Frames (every 20th frame)
-      const keyFrames = [];
-      for (let i = 1; i <= TOTAL_FRAMES; i += 20) keyFrames.push(i);
-      if (!keyFrames.includes(TOTAL_FRAMES)) keyFrames.push(TOTAL_FRAMES);
-
-      for (const i of keyFrames) {
-        if (!isMounted) return;
-        await new Promise((resolve) => {
-          const img = new Image();
-          img.src = getPath(i, formatIdx);
-          img.onload = () => {
-            images[i] = img;
-            if (i === 1) renderFrame(1, images);
-            resolve();
-          };
-          img.onerror = () => resolve();
-        });
-      }
-
-      // Phase 2: Load the rest in batches with low priority
-      const batchSize = 5;
-      for (let i = 1; i <= TOTAL_FRAMES; i++) {
-        if (!isMounted) break;
-        if (images[i]) continue; // Skip key frames
-
-        const batch = [];
-        for (let j = 0; j < batchSize && (i + j) <= TOTAL_FRAMES; j++) {
-          const frameIdx = i + j;
-          if (images[frameIdx]) continue;
-          batch.push(new Promise((resolve) => {
-            const img = new Image();
-            img.src = getPath(frameIdx, formatIdx);
-            img.onload = () => {
-              images[frameIdx] = img;
-              resolve();
-            };
-            img.onerror = () => resolve();
-          }));
-        }
-        await Promise.all(batch);
-        i += batchSize - 1;
-        
-        // Give some breath to the main thread
-        await new Promise(r => setTimeout(r, 10));
-      }
-      setImagesLoaded(true);
-    };
-    loadImages();
-
-    // Store images in a ref to access them in the render loop without triggering re-renders
-    window.aboutImages = images;
-
-    return () => {
-      isMounted = false;
-    };
+    // We already preloaded everything in Home.jsx, 
+    // so we just need to render the first frame here.
+    renderFrame(1);
   }, []);
 
-  const renderFrame = (idx, forcedImages = null) => {
+  const renderFrame = (idx) => {
     if (!canvasRef.current) return;
-    const images = forcedImages || window.aboutImages;
-    if (!images) return;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d", { alpha: false });
-
-    const roundedIdx = Math.min(TOTAL_FRAMES, Math.max(1, Math.round(idx)));
-    const img = images[roundedIdx];
-
-    if (!img || !img.complete) {
-      let fallbackImg = null;
-      for (let i = roundedIdx; i >= 1; i--) {
-        if (images[i] && images[i].complete) {
-          fallbackImg = images[i];
-          break;
+    const img = getCachedImage('about', idx);
+    if (!img) {
+      // Fallback to nearest loaded frame
+      for (let i = Math.round(idx); i >= 1; i--) {
+        const cached = getCachedImage('about', i);
+        if (cached) {
+          drawToCanvas(canvasRef.current, cached);
+          return;
         }
       }
-      if (!fallbackImg) return;
-      drawToCanvas(canvas, fallbackImg);
       return;
     }
-
-    drawToCanvas(canvas, img);
+    drawToCanvas(canvasRef.current, img);
   };
 
   const updateCanvasSize = (canvas) => {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2); // Cap DPR at 2 for performance
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const width = window.innerWidth;
     const height = window.innerHeight;
     
@@ -170,8 +87,7 @@ export default function About() {
     const offsetX = (canvasWidth - drawWidth) / 2;
     const offsetY = (canvasHeight - drawHeight) / 2;
 
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "medium"; // Use medium for better performance
+    ctx.imageSmoothingQuality = "medium";
 
     ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
   };

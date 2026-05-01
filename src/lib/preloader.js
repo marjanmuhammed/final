@@ -4,74 +4,50 @@ const imageCache = {
   about: [],
 };
 
-const preloadingStatus = {
-  hero: false,
-  about: false,
-  totalHero: 120,
-  totalAbout: 240,
-  loadedHero: 0,
-  loadedAbout: 0,
+const status = {
+  heroReady: false,
+  aboutReady: false,
 };
 
-export const preloadImages = (onProgress) => {
-  if (preloadingStatus.hero && preloadingStatus.about) return;
-
-  const loadSet = async (type, total, pathTemplate) => {
-    // Phase 1: Load critical frames (first 10 frames)
-    const criticalFrames = 10;
-    for (let i = 1; i <= Math.min(total, criticalFrames); i++) {
-      await loadSingleImage(type, i, pathTemplate);
+export const preloadAll = async (onProgress) => {
+  const loadBatch = async (type, start, end, template) => {
+    const promises = [];
+    for (let i = start; i <= end; i++) {
+      promises.push(new Promise((resolve) => {
+        if (imageCache[type][i]) return resolve();
+        const img = new Image();
+        const paddedIndex = i.toString().padStart(3, '0');
+        img.src = template.replace('{idx}', paddedIndex);
+        img.onload = () => {
+          imageCache[type][i] = img;
+          resolve();
+        };
+        img.onerror = () => resolve();
+      }));
     }
-
-    // Phase 2: Load the rest asynchronously
-    for (let i = criticalFrames + 1; i <= total; i++) {
-      loadSingleImage(type, i, pathTemplate);
-    }
-
-    preloadingStatus[type] = true;
+    return Promise.all(promises);
   };
 
-  const loadSingleImage = (type, i, pathTemplate) => {
-    return new Promise((resolve) => {
-      if (imageCache[type][i]) return resolve();
+  // Phase 1: Critical frames (First 40 frames of each)
+  // This is enough to start the animation smoothly
+  await Promise.all([
+    loadBatch('hero', 1, 40, '/images/herosection-webp/ezgif-frame-{idx}.webp'),
+    loadBatch('about', 1, 40, '/images/about/ezgif-frame-{idx}.png')
+  ]);
 
-      const img = new Image();
-      const paddedIndex = i.toString().padStart(3, '0');
-      img.src = pathTemplate.replace('{idx}', paddedIndex);
+  status.heroReady = true;
+  status.aboutReady = true;
 
-      img.onload = () => {
-        imageCache[type][i] = img;
-        preloadingStatus[`loaded${type.charAt(0).toUpperCase() + type.slice(1)}`]++;
-        if (onProgress) {
-          onProgress({
-            type,
-            current: preloadingStatus[`loaded${type.charAt(0).toUpperCase() + type.slice(1)}`],
-            total: preloadingStatus[`total${type.charAt(0).toUpperCase() + type.slice(1)}`],
-          });
-        }
-        resolve();
-      };
-      img.onerror = () => {
-        console.error(`Failed to load ${type} frame ${i}`);
-        resolve();
-      };
-    });
-  };
+  // Phase 2: Background frames (The rest)
+  // We don't await this so the loader can finish, but they keep loading in background
+  loadBatch('hero', 41, 120, '/images/herosection-webp/ezgif-frame-{idx}.webp');
+  loadBatch('about', 41, 240, '/images/about/ezgif-frame-{idx}.png');
 
-  if (!preloadingStatus.hero) {
-    loadSet('hero', preloadingStatus.totalHero, '/images/herosection-webp/ezgif-frame-{idx}.webp');
-  }
-
-  if (!preloadingStatus.about) {
-    loadSet('about', preloadingStatus.totalAbout, '/images/about/ezgif-frame-{idx}.png');
-  }
+  return true;
 };
 
 export const getCachedImage = (type, index) => {
-  return imageCache[type][index];
+  return imageCache[type][Math.round(index)];
 };
 
-export const isPreloaded = (type) => {
-  if (type) return preloadingStatus[type];
-  return preloadingStatus.hero && preloadingStatus.about;
-};
+export const isReady = () => status.heroReady && status.aboutReady;
