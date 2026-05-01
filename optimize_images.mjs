@@ -34,8 +34,6 @@ async function processImages() {
 
       const width = SIZES[sizeKey];
       
-      // Process only a subset of frames for mobile to save bandwidth/CPU if it's About section
-      // For Hero we keep all for smoothness, or maybe skip every 2nd frame for mobile
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         
