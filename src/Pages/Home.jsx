@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion as Motion, useScroll, useTransform, useMotionValueEvent, AnimatePresence } from "framer-motion";
+import { useInView } from "react-intersection-observer";
 import Lottie from "lottie-react";
+
 
 // Import the Lottie animation JSON file
 import evolutionAnimationData from "../loading/evolution.json";
@@ -59,6 +61,8 @@ export default function Home() {
   const IMAGE_LOAD_TIMEOUT = 6000;
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
+  const { ref: viewRef, inView } = useInView({ threshold: 0.1 });
+
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -96,8 +100,12 @@ export default function Home() {
   }, []);
 
   const renderFrame = (idx) => {
-    if (!canvasRef.current) return;
+    // Ensure we render if at the top of the page even if inView is momentarily false
+    const isAtTop = idx <= 1.1;
+    if (!canvasRef.current || (!inView && !isAtTop)) return;
     const img = getCachedImage('hero', idx);
+
+
     if (!img) {
       // Fallback to nearest loaded frame
       for (let i = Math.round(idx); i >= 1; i--) {
@@ -168,6 +176,11 @@ export default function Home() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [frameIndex]);
+
+  useEffect(() => {
+    if (inView) renderFrame(frameIndex.get());
+  }, [inView]);
+
 
   // Typing animation effect
   useEffect(() => {
@@ -254,12 +267,14 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      <div className="sticky top-0 w-full h-[100dvh] overflow-hidden flex flex-col justify-center items-center bg-black">
+      <div ref={viewRef} className="sticky top-0 w-full h-[100dvh] overflow-hidden flex flex-col justify-center items-center bg-black">
+
         <Motion.canvas
           ref={canvasRef}
-          style={{ scale: canvasZoom }}
+          style={{ scale: canvasZoom, willChange: "transform" }}
           className="absolute inset-0 w-full h-full z-0 object-cover pointer-events-none"
         />
+
         <div className="absolute inset-0 bg-black/50 z-0 pointer-events-none"></div>
 
         <Motion.div

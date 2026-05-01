@@ -1,4 +1,3 @@
-
 const imageCache = {
   hero: [],
   about: [],
@@ -9,10 +8,19 @@ const status = {
   aboutReady: false,
 };
 
-export const preloadAll = async (onProgress) => {
-  const loadBatch = async (type, start, end, template) => {
+const getDeviceSize = () => {
+  const width = window.innerWidth;
+  if (width < 768) return 'mobile';
+  if (width < 1024) return 'tablet';
+  return 'desktop';
+};
+
+const deviceSize = getDeviceSize();
+
+export const preloadAll = async () => {
+  const loadBatch = async (type, start, end, template, step = 1) => {
     const promises = [];
-    for (let i = start; i <= end; i++) {
+    for (let i = start; i <= end; i += step) {
       promises.push(new Promise((resolve) => {
         if (imageCache[type][i]) return resolve();
         const img = new Image();
@@ -28,26 +36,40 @@ export const preloadAll = async (onProgress) => {
     return Promise.all(promises);
   };
 
-  // Phase 1: Critical frames (First 40 frames of each)
-  // This is enough to start the animation smoothly
-  await Promise.all([
-    loadBatch('hero', 1, 40, '/images/herosection-webp/ezgif-frame-{idx}.webp'),
-    loadBatch('about', 1, 40, '/images/about/ezgif-frame-{idx}.png')
-  ]);
+  const heroTemplate = `/images/hero_optimized/${deviceSize}/ezgif-frame-{idx}.webp`;
+  const aboutTemplate = `/images/about_optimized/${deviceSize}/ezgif-frame-{idx}.webp`;
+  
+  // Mobile uses every 2nd frame to save memory/CPU
+  const step = deviceSize === 'mobile' ? 2 : 1;
 
+  // Phase 1: ONLY Critical Hero frames first (first 60)
+  await loadBatch('hero', 1, 60, heroTemplate, step);
   status.heroReady = true;
-  status.aboutReady = true;
 
-  // Phase 2: Background frames (The rest)
-  // We don't await this so the loader can finish, but they keep loading in background
-  loadBatch('hero', 41, 120, '/images/herosection-webp/ezgif-frame-{idx}.webp');
-  loadBatch('about', 41, 240, '/images/about/ezgif-frame-{idx}.png');
+  // Phase 2: Rest of Hero and Start of About in background
+  Promise.all([
+    loadBatch('hero', 61, 120, heroTemplate, step),
+    loadBatch('about', 1, 60, aboutTemplate, step)
+  ]).then(() => {
+    status.aboutReady = true;
+    // Phase 3: Rest of About
+    loadBatch('about', 61, 240, aboutTemplate, step);
+  });
 
   return true;
 };
 
 export const getCachedImage = (type, index) => {
-  return imageCache[type][Math.round(index)];
+  const idx = Math.round(index);
+  if (imageCache[type][idx]) return imageCache[type][idx];
+  
+  // Fallback to nearest neighbor if frame is missing (important for skipped frames on mobile)
+  for (let offset = 1; offset < 10; offset++) {
+    if (imageCache[type][idx - offset]) return imageCache[type][idx - offset];
+    if (imageCache[type][idx + offset]) return imageCache[type][idx + offset];
+  }
+  return null;
 };
 
-export const isReady = () => status.heroReady && status.aboutReady;
+export const isReady = () => status.heroReady;
+

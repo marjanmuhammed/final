@@ -1,5 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import { motion, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
+import { useInView } from "react-intersection-observer";
+
 import {
   FaPhoneAlt, FaMapMarkerAlt, FaGraduationCap, FaEnvelope,
   FaLaptopCode, FaClock, FaHtml5, FaCss3Alt, FaBootstrap,
@@ -11,6 +13,8 @@ import { getCachedImage } from "../lib/preloader";
 export default function About() {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
+  const { ref: viewRef, inView } = useInView({ threshold: 0.1 });
+
   const TOTAL_FRAMES = 240;
   const [imagesLoaded, setImagesLoaded] = useState(false);
 
@@ -31,8 +35,9 @@ export default function About() {
   }, []);
 
   const renderFrame = (idx) => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current || !inView) return;
     const img = getCachedImage('about', idx);
+
     if (!img) {
       // Fallback to nearest loaded frame
       for (let i = Math.round(idx); i >= 1; i--) {
@@ -129,11 +134,14 @@ export default function About() {
         style={{ opacity: canvasOpacity }}
         className="absolute top-0 left-0 w-full h-[calc(100%+100dvh)] z-0 pointer-events-none mt-[-100dvh]"
       >
-        <div className="sticky top-0 w-full h-[100dvh] overflow-hidden">
+        <div ref={viewRef} className="sticky top-0 w-full h-[100dvh] overflow-hidden">
+
           <motion.canvas
             ref={canvasRef}
+            style={{ willChange: "transform" }}
             className="absolute inset-0 w-full h-full object-cover pointer-events-none"
           />
+
           <div className="absolute inset-0 bg-black/50 pointer-events-none" />
         </div>
       </motion.div>
