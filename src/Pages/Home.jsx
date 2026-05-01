@@ -139,11 +139,8 @@ export default function Home() {
     const canvasHeight = window.innerHeight;
     const canvasRatio = canvasWidth / canvasHeight;
     const imgRatio = img.width / img.height;
-<<<<<<< HEAD
 
-=======
     
->>>>>>> 136a72b (Added the about section backround animation3)
     let drawWidth = canvasWidth;
     let drawHeight = canvasHeight;
 
