@@ -118,7 +118,7 @@ export default function Terminal() {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .terminal-line {
           animation: appear 0.3s ease forwards;
         }

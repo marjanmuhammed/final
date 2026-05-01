@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import { motion, useScroll, useTransform, useMotionValueEvent, AnimatePresence } from "framer-motion";
+import { motion as Motion, useScroll, useTransform, useMotionValueEvent, AnimatePresence } from "framer-motion";
 import Lottie from "lottie-react";
 
 // Import the Lottie animation JSON file
-// Make sure to place your converted JSON file in the public folder or import it directly
 import evolutionAnimationData from "../loading/evolution.json";
 
 const roles = ["Full Stack Developer", "Freelancer", "Designer"];
@@ -16,8 +15,6 @@ export default function Home() {
   const [isAnimationFinished, setIsAnimationFinished] = useState(false);
   const [showLottieLoader, setShowLottieLoader] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
-  const [progress, setProgress] = useState(0);
-
 
   // --- Lottie Playback Handler ---
   useEffect(() => {
@@ -57,7 +54,8 @@ export default function Home() {
   }, [isFirstVisit]);
 
   // --- High-End Playback Animation (Scroll Canvas) ---
-  const TOTAL_FRAMES = 240;
+  const TOTAL_FRAMES = 120;
+  const IMAGE_LOAD_TIMEOUT = 6000;
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const imagesRef = useRef([]);
@@ -67,13 +65,28 @@ export default function Home() {
     offset: ["start start", "end end"]
   });
 
+  const { scrollYProgress: textScrollProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end start"]
+  });
+
   const frameIndex = useTransform(scrollYProgress, [0, 1], [1, TOTAL_FRAMES]);
   const canvasZoom = useTransform(scrollYProgress, [0, 1], [1.15, 1]);
-  const textOpacity = useTransform(scrollYProgress, [0, 0.15], [0, 1]);
-  const textY = useTransform(scrollYProgress, [0, 0.15], [30, 0]);
+  
+  // Fades out deep into the About section scroll to cover the transition (stays visible for roughly ~80vh into About section)
+  const textOpacity = useTransform(textScrollProgress, [0, 0.1, 0.92, 0.98], [0, 1, 1, 0]);
+  const textY = useTransform(textScrollProgress, [0, 0.1], [30, 0]);
 
   useEffect(() => {
     let isMounted = true;
+    const loadingFallback = setTimeout(() => {
+      if (isMounted) setIsLoading(false);
+    }, IMAGE_LOAD_TIMEOUT);
+
+    const finishLoading = () => {
+      clearTimeout(loadingFallback);
+      setIsLoading(false);
+    };
 
     const loadImages = () => {
       let loadedCount = 0;
@@ -89,21 +102,17 @@ export default function Home() {
           imagesRef.current[i] = img;
           loadedCount++;
           
-          const currentProgress = Math.round((loadedCount / totalImages) * 100);
-          setProgress(currentProgress);
-
-          // Render the first frame as soon as it's ready
           if (i === 1) renderFrame(1);
 
           if (loadedCount === totalImages) {
-            setIsLoading(false);
+            finishLoading();
           }
         };
 
         img.onerror = () => {
           if (!isMounted) return;
           loadedCount++;
-          if (loadedCount === totalImages) setIsLoading(false);
+          if (loadedCount === totalImages) finishLoading();
         };
       }
     };
@@ -111,6 +120,7 @@ export default function Home() {
 
     return () => {
       isMounted = false;
+      clearTimeout(loadingFallback);
     };
   }, []);
 
@@ -197,7 +207,6 @@ export default function Home() {
     }
   }, [charIndex, index]);
 
-  // Handle loader exit
   const handleLoaderExit = () => {
     setShowLottieLoader(false);
   };
@@ -207,16 +216,15 @@ export default function Home() {
       ref={containerRef}
       className="h-[300dvh] relative w-full bg-black"
     >
-      {/* Lottie Animation Preloader Overlay */}
-      <AnimatePresence>
+      <AnimatePresence onExitComplete={handleLoaderExit}>
         {showLottieLoader && (isLoading || !isAnimationFinished) && (
-          <motion.div
+          <Motion.div
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 1.2, ease: "easeInOut" }}
             className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black"
           >
-            <motion.div
+            <Motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
@@ -240,43 +248,43 @@ export default function Home() {
               <div className="text-white font-sans text-xs md:text-sm tracking-[0.2em] uppercase opacity-80 text-center">
                 Evolution in Progress
                 <span className="tracking-normal inline-flex">
-                  <motion.span
+                  <Motion.span
                     animate={{ opacity: [0, 1, 0] }}
                     transition={{ repeat: Infinity, duration: 1.5, delay: 0 }}
                   >
                     .
-                  </motion.span>
-                  <motion.span
+                  </Motion.span>
+                  <Motion.span
                     animate={{ opacity: [0, 1, 0] }}
                     transition={{ repeat: Infinity, duration: 1.5, delay: 0.3 }}
                   >
                     .
-                  </motion.span>
-                  <motion.span
+                  </Motion.span>
+                  <Motion.span
                     animate={{ opacity: [0, 1, 0] }}
                     transition={{ repeat: Infinity, duration: 1.5, delay: 0.6 }}
                   >
                     .
-                  </motion.span>
+                  </Motion.span>
                 </span>
               </div>
-            </motion.div>
-          </motion.div>
+            </Motion.div>
+          </Motion.div>
         )}
       </AnimatePresence>
 
       <div className="sticky top-0 w-full h-[100dvh] overflow-hidden flex flex-col justify-center items-center bg-black">
-        <motion.canvas
+        <Motion.canvas
           ref={canvasRef}
           style={{ scale: canvasZoom }}
           className="absolute inset-0 w-full h-full z-0 object-cover pointer-events-none"
         />
         <div className="absolute inset-0 bg-black/50 z-0 pointer-events-none"></div>
 
-        <motion.div
+        <Motion.div
           id="home"
           style={{ opacity: textOpacity, y: textY }}
-          className="relative z-10 flex flex-col justify-center items-center px-4 md:px-10 max-w-full overflow-x-hidden pointer-events-none"
+          className="fixed inset-0 z-[9999] flex flex-col justify-center items-center px-4 md:px-10 max-w-full overflow-x-hidden pointer-events-none"
         >
           <h1 className="text-center text-4xl md:text-5xl lg:text-7xl font-extrabold mb-4 md:mb-6 tracking-tight">
             <span className="text-white drop-shadow-lg mr-2 md:mr-3">I am</span>
@@ -287,7 +295,7 @@ export default function Home() {
 
           <div className="flex flex-wrap justify-center items-center mb-6 md:mb-8 text-lg md:text-3xl font-light whitespace-nowrap tracking-wide">
             <span className="mr-2 md:mr-3 text-gray-300 drop-shadow-md">I am</span>
-            <motion.span
+            <Motion.span
               key={index}
               initial={{ opacity: 0.5 }}
               animate={{ opacity: 1 }}
@@ -296,15 +304,15 @@ export default function Home() {
             >
               {displayedText}
               <span className="animate-pulse text-white">|</span>
-            </motion.span>
+            </Motion.span>
           </div>
 
-          <motion.p
+          <Motion.p
             className="text-xs md:text-lg text-center max-w-xs md:max-w-xl text-gray-400 font-light tracking-wider drop-shadow-[0_2px_6px_rgba(0,255,255,0.3)]"
           >
             Let's create something amazing together.
-          </motion.p>
-        </motion.div>
+          </Motion.p>
+        </Motion.div>
       </div>
     </div>
   );

@@ -14,14 +14,19 @@
     transition: box-shadow 0.3s ease, background-color 0.3s ease, color 0.3s ease;
   }
   
-  html {
+  html, body {
     scroll-behavior: smooth;
+    overflow-x: clip;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
   }
   
   /* Force hide video controls on mobile devices */
   video::-webkit-media-controls {
     display: none !important;
     opacity: 0 !important;
+    vertical-align: middle;
   }
   video::-webkit-media-controls-enclosure {
     display: none !important;

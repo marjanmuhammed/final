@@ -1167,7 +1167,15 @@ const Hyperspeed = ({ effectOptions = DEFAULT_EFFECT_OPTIONS }) => {
 
     const myApp = new App(container, options);
     appRef.current = myApp;
-    myApp.loadAssets().then(myApp.init);
+    myApp.loadAssets().then(() => {
+      if (!myApp.disposed) {
+        try {
+          myApp.init();
+        } catch (err) {
+          console.warn("Hyperspeed WebGL initialization skipped:", err.message);
+        }
+      }
+    });
 
     return () => {
       if (appRef.current) {

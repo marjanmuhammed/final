@@ -15,8 +15,8 @@ export default function Hummingbird() {
         position: "fixed",
         top: 0,
         left: 0,
-        width: "100vw",
-        height: "100vh",
+        width: "100%",
+        height: "100dvh",
         zIndex: 9999, 
         pointerEvents: "none",
         overflow: "hidden"
@@ -109,7 +109,7 @@ export default function Hummingbird() {
         </svg>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .hummingbird-container {
           width: 800px; /* Even bigger size for maximum presence */
           height: 800px;

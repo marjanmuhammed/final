@@ -87,6 +87,7 @@ const Animation = () => {
     boxSizing: "border-box",
   };
 
+
   React.useEffect(() => {
     document.body.style.margin = 0;
     document.body.style.height = "100%";

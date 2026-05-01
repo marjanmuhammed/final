@@ -1,4 +1,5 @@
-import { motion } from "framer-motion";
+import React, { useRef, useEffect, useState } from "react";
+import { motion, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
 import {
   FaPhoneAlt, FaMapMarkerAlt, FaGraduationCap, FaEnvelope,
   FaLaptopCode, FaClock, FaHtml5, FaCss3Alt, FaBootstrap,
@@ -7,6 +8,108 @@ import {
 import { SiTailwindcss, SiRedux } from "react-icons/si";
 
 export default function About() {
+  const containerRef = useRef(null);
+  const canvasRef = useRef(null);
+  const imagesRef = useRef([]);
+  const TOTAL_FRAMES = 240;
+
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start end", "end end"]
+  });
+
+  const frameIndex = useTransform(scrollYProgress, [0, 1], [1, TOTAL_FRAMES]);
+
+  // Snap instantly to opacity 1 at the exact boundary to perfectly hide the Hero car sliding up underneath
+  const canvasOpacity = useTransform(scrollYProgress, [0, 0.01], [0, 1]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadImages = () => {
+      for (let i = 1; i <= TOTAL_FRAMES; i++) {
+        const img = new window.Image();
+        const paddedIndex = i.toString().padStart(3, '0');
+        img.src = `/images/about/ezgif-frame-${paddedIndex}.png`;
+        
+        img.onload = () => {
+          if (!isMounted) return;
+          imagesRef.current[i] = img;
+          if (i === 1) renderFrame(1);
+        };
+      }
+    };
+    loadImages();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const renderFrame = (idx) => {
+    if (!canvasRef.current) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d", { alpha: false });
+
+    const roundedIdx = Math.min(TOTAL_FRAMES, Math.max(1, Math.round(idx)));
+    const img = imagesRef.current[roundedIdx];
+
+    if (!img || !img.complete) {
+      let fallbackImg = null;
+      for (let i = roundedIdx; i >= 1; i--) {
+        if (imagesRef.current[i] && imagesRef.current[i].complete) {
+          fallbackImg = imagesRef.current[i];
+          break;
+        }
+      }
+      if (!fallbackImg) return;
+      drawToCanvas(canvas, ctx, fallbackImg);
+      return;
+    }
+
+    drawToCanvas(canvas, ctx, img);
+  };
+
+  const drawToCanvas = (canvas, ctx, img) => {
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = window.innerWidth * dpr;
+    canvas.height = window.innerHeight * dpr;
+    canvas.style.width = `${window.innerWidth}px`;
+    canvas.style.height = `${window.innerHeight}px`;
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+
+    const canvasRatio = window.innerWidth / window.innerHeight;
+    const imgRatio = img.width / img.height;
+    let drawWidth = window.innerWidth;
+    let drawHeight = window.innerHeight;
+
+    if (canvasRatio > imgRatio) {
+      drawHeight = window.innerWidth / imgRatio;
+    } else {
+      drawWidth = window.innerHeight * imgRatio;
+    }
+
+    const offsetX = (window.innerWidth - drawWidth) / 2;
+    const offsetY = (window.innerHeight - drawHeight) / 2;
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+
+    ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+  };
+
+  useMotionValueEvent(frameIndex, "change", (latest) => {
+    requestAnimationFrame(() => renderFrame(latest));
+  });
+
+  useEffect(() => {
+    const handleResize = () => requestAnimationFrame(() => renderFrame(frameIndex.get()));
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [frameIndex]);
+
   const fadeUpVariant = {
     hidden: { opacity: 0, y: 40 },
     visible: {
@@ -28,20 +131,28 @@ export default function About() {
   ];
 
   return (
-    <div className="relative min-h-[100dvh] font-montserrat text-white px-4 md:px-10 py-16 pt-20 overflow-hidden">
-
-      {/* Background Video */}
-    
-
-      {/* Optional: Overlay for clarity */}
-      <div className="absolute top-0 left-0 w-full h-full bg-black/50 z-0" />
-
-      <motion.main
-        className="relative max-w-5xl mx-auto z-10"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: false, amount: 0.3 }}
+    <div ref={containerRef} id="about" className="relative w-full min-h-[250dvh] bg-transparent font-montserrat text-white pb-[15vh]">
+      {/* Background Canvas */}
+      <motion.div 
+        style={{ opacity: canvasOpacity }}
+        className="absolute top-0 left-0 w-full h-[calc(100%+100dvh)] z-0 pointer-events-none mt-[-100dvh]"
       >
+        <div className="sticky top-0 w-full h-[100dvh] overflow-hidden">
+          <motion.canvas
+            ref={canvasRef}
+            className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+          />
+          <div className="absolute inset-0 bg-black/50 pointer-events-none" />
+        </div>
+      </motion.div>
+
+      <div className="relative z-10 px-4 md:px-10 py-16 pt-[15vh]">
+        <motion.main
+          className="relative max-w-5xl mx-auto z-10"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: false, amount: 0.3 }}
+        >
         {/* Heading */}
         <motion.h2
           className="text-3xl md:text-4xl font-extrabold mb-10 tracking-tight bg-gradient-to-r from-blue-300 via-pink-300 to-purple-400 bg-clip-text text-transparent drop-shadow-lg"
@@ -94,7 +205,7 @@ export default function About() {
           viewport={{ once: true, amount: 0.3 }}
         >
           <motion.h3
-         className="text-3xl md:text-4xl font-extrabold mb-10 tracking-tight bg-gradient-to-r from-blue-300 via-pink-300 to-purple-400 bg-clip-text text-transparent drop-shadow-lg"
+          className="text-3xl md:text-4xl font-extrabold mb-10 tracking-tight bg-gradient-to-r from-blue-300 via-pink-300 to-purple-400 bg-clip-text text-transparent drop-shadow-lg"
 
             variants={fadeUpVariant}
           >
@@ -137,6 +248,7 @@ export default function About() {
           </div>
         </motion.div>
       </motion.main>
+      </div>
     </div>
   );
 }
