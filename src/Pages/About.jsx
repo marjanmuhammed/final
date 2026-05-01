@@ -29,38 +29,70 @@ export default function About() {
     let loadedCount = 0;
 
     const loadImages = async () => {
-      // Load critical first frame immediately
-      const firstImg = new Image();
-      firstImg.src = `/images/about/ezgif-frame-001.png`;
-      firstImg.onload = () => {
-        if (isMounted) {
-          images[1] = firstImg;
-          renderFrame(1, images);
-        }
-      };
+      const paths = [
+        `/images/about-webp/ezgif-frame-{idx}.webp`,
+        `/images/about/ezgif-frame-{idx}.png` // Fallback
+      ];
 
-      // Load rest in batches to avoid crashing mobile browsers
-      const batchSize = 10;
-      for (let i = 1; i <= TOTAL_FRAMES; i += batchSize) {
+      const getPath = (idx, formatIdx) => paths[formatIdx].replace('{idx}', idx.toString().padStart(3, '0'));
+
+      // Check which format exists (try first frame)
+      let formatIdx = 0;
+      const probeImg = new Image();
+      probeImg.src = getPath(1, 0);
+      
+      const formatSupported = await new Promise((resolve) => {
+        probeImg.onload = () => resolve(0);
+        probeImg.onerror = () => resolve(1);
+      });
+      formatIdx = formatSupported;
+
+      // Phase 1: Load First Frame & Key Frames (every 20th frame)
+      const keyFrames = [];
+      for (let i = 1; i <= TOTAL_FRAMES; i += 20) keyFrames.push(i);
+      if (!keyFrames.includes(TOTAL_FRAMES)) keyFrames.push(TOTAL_FRAMES);
+
+      for (const i of keyFrames) {
+        if (!isMounted) return;
+        await new Promise((resolve) => {
+          const img = new Image();
+          img.src = getPath(i, formatIdx);
+          img.onload = () => {
+            images[i] = img;
+            if (i === 1) renderFrame(1, images);
+            resolve();
+          };
+          img.onerror = () => resolve();
+        });
+      }
+
+      // Phase 2: Load the rest in batches with low priority
+      const batchSize = 5;
+      for (let i = 1; i <= TOTAL_FRAMES; i++) {
         if (!isMounted) break;
+        if (images[i]) continue; // Skip key frames
+
         const batch = [];
-        for (let j = i; j < i + batchSize && j <= TOTAL_FRAMES; j++) {
-          if (images[j]) continue;
+        for (let j = 0; j < batchSize && (i + j) <= TOTAL_FRAMES; j++) {
+          const frameIdx = i + j;
+          if (images[frameIdx]) continue;
           batch.push(new Promise((resolve) => {
             const img = new Image();
-            const paddedIndex = j.toString().padStart(3, '0');
-            img.src = `/images/about/ezgif-frame-${paddedIndex}.png`;
+            img.src = getPath(frameIdx, formatIdx);
             img.onload = () => {
-              if (isMounted) images[j] = img;
+              images[frameIdx] = img;
               resolve();
             };
             img.onerror = () => resolve();
           }));
         }
         await Promise.all(batch);
-        loadedCount += batch.length;
-        if (loadedCount >= TOTAL_FRAMES) setImagesLoaded(true);
+        i += batchSize - 1;
+        
+        // Give some breath to the main thread
+        await new Promise(r => setTimeout(r, 10));
       }
+      setImagesLoaded(true);
     };
     loadImages();
 

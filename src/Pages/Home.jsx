@@ -89,41 +89,54 @@ export default function Home() {
     };
 
     const loadImages = async () => {
-      let loadedCount = 0;
-      const totalImages = TOTAL_FRAMES;
+      const pathTemplate = `/images/herosection-webp/ezgif-frame-{idx}.webp`;
+      const getPath = (idx) => pathTemplate.replace('{idx}', idx.toString().padStart(3, '0'));
 
-      // Load first frame immediately
-      const firstImg = new Image();
-      firstImg.src = `/images/herosection-webp/ezgif-frame-001.webp`;
-      firstImg.onload = () => {
-        if (isMounted) {
-          images[1] = firstImg;
-          renderFrame(1, images);
-        }
-      };
+      // Phase 1: Load First Frame & Key Frames (every 15th frame)
+      const keyFrames = [];
+      for (let i = 1; i <= TOTAL_FRAMES; i += 15) keyFrames.push(i);
+      if (!keyFrames.includes(TOTAL_FRAMES)) keyFrames.push(TOTAL_FRAMES);
 
-      // Load rest in batches
-      const batchSize = 10;
-      for (let i = 1; i <= totalImages; i += batchSize) {
+      for (const i of keyFrames) {
+        if (!isMounted) return;
+        await new Promise((resolve) => {
+          const img = new Image();
+          img.src = getPath(i);
+          img.onload = () => {
+            images[i] = img;
+            if (i === 1) renderFrame(1, images);
+            resolve();
+          };
+          img.onerror = () => resolve();
+        });
+      }
+      setIsLoading(false); // Reveal the page once key frames are ready!
+
+      // Phase 2: Load the rest in batches
+      const batchSize = 8;
+      for (let i = 1; i <= TOTAL_FRAMES; i++) {
         if (!isMounted) break;
+        if (images[i]) continue;
+
         const batch = [];
-        for (let j = i; j < i + batchSize && j <= totalImages; j++) {
-          if (images[j]) continue;
+        for (let j = 0; j < batchSize && (i + j) <= TOTAL_FRAMES; j++) {
+          const frameIdx = i + j;
+          if (images[frameIdx]) continue;
           batch.push(new Promise((resolve) => {
             const img = new Image();
-            const paddedIndex = j.toString().padStart(3, '0');
-            img.src = `/images/herosection-webp/ezgif-frame-${paddedIndex}.webp`;
+            img.src = getPath(frameIdx);
             img.onload = () => {
-              if (isMounted) images[j] = img;
+              images[frameIdx] = img;
               resolve();
             };
             img.onerror = () => resolve();
           }));
         }
         await Promise.all(batch);
-        loadedCount += batch.length;
-        if (loadedCount >= totalImages) finishLoading();
+        i += batchSize - 1;
+        await new Promise(r => setTimeout(r, 10)); // Yield to main thread
       }
+      finishLoading();
     };
     loadImages();
 
