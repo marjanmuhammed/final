@@ -58,7 +58,6 @@ export default function Home() {
   const IMAGE_LOAD_TIMEOUT = 6000;
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
-  const imagesRef = useRef([]);
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -79,44 +78,56 @@ export default function Home() {
 
   useEffect(() => {
     let isMounted = true;
+    const images = [];
     const loadingFallback = setTimeout(() => {
       if (isMounted) setIsLoading(false);
     }, IMAGE_LOAD_TIMEOUT);
 
     const finishLoading = () => {
       clearTimeout(loadingFallback);
-      setIsLoading(false);
+      if (isMounted) setIsLoading(false);
     };
 
-    const loadImages = () => {
+    const loadImages = async () => {
       let loadedCount = 0;
       const totalImages = TOTAL_FRAMES;
 
-      for (let i = 1; i <= TOTAL_FRAMES; i++) {
-        const img = new window.Image();
-        const paddedIndex = i.toString().padStart(3, '0');
-        img.src = `/images/herosection-webp/ezgif-frame-${paddedIndex}.webp`;
-        
-        img.onload = () => {
-          if (!isMounted) return;
-          imagesRef.current[i] = img;
-          loadedCount++;
-          
-          if (i === 1) renderFrame(1);
+      // Load first frame immediately
+      const firstImg = new Image();
+      firstImg.src = `/images/herosection-webp/ezgif-frame-001.webp`;
+      firstImg.onload = () => {
+        if (isMounted) {
+          images[1] = firstImg;
+          renderFrame(1, images);
+        }
+      };
 
-          if (loadedCount === totalImages) {
-            finishLoading();
-          }
-        };
-
-        img.onerror = () => {
-          if (!isMounted) return;
-          loadedCount++;
-          if (loadedCount === totalImages) finishLoading();
-        };
+      // Load rest in batches
+      const batchSize = 10;
+      for (let i = 1; i <= totalImages; i += batchSize) {
+        if (!isMounted) break;
+        const batch = [];
+        for (let j = i; j < i + batchSize && j <= totalImages; j++) {
+          if (images[j]) continue;
+          batch.push(new Promise((resolve) => {
+            const img = new Image();
+            const paddedIndex = j.toString().padStart(3, '0');
+            img.src = `/images/herosection-webp/ezgif-frame-${paddedIndex}.webp`;
+            img.onload = () => {
+              if (isMounted) images[j] = img;
+              resolve();
+            };
+            img.onerror = () => resolve();
+          }));
+        }
+        await Promise.all(batch);
+        loadedCount += batch.length;
+        if (loadedCount >= totalImages) finishLoading();
       }
     };
     loadImages();
+
+    window.heroImages = images;
 
     return () => {
       isMounted = false;
@@ -124,56 +135,74 @@ export default function Home() {
     };
   }, []);
 
-  const renderFrame = (idx) => {
+  const renderFrame = (idx, forcedImages = null) => {
     if (!canvasRef.current) return;
+    const images = forcedImages || window.heroImages;
+    if (!images) return;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d", { alpha: false });
 
     const roundedIdx = Math.min(TOTAL_FRAMES, Math.max(1, Math.round(idx)));
-    const img = imagesRef.current[roundedIdx];
+    const img = images[roundedIdx];
 
     if (!img || !img.complete) {
       let fallbackImg = null;
       for (let i = roundedIdx; i >= 1; i--) {
-        if (imagesRef.current[i] && imagesRef.current[i].complete) {
-          fallbackImg = imagesRef.current[i];
+        if (images[i] && images[i].complete) {
+          fallbackImg = images[i];
           break;
         }
       }
       if (!fallbackImg) return;
-      drawToCanvas(canvas, ctx, fallbackImg);
+      drawToCanvas(canvas, fallbackImg);
       return;
     }
 
-    drawToCanvas(canvas, ctx, img);
+    drawToCanvas(canvas, img);
   };
 
-  const drawToCanvas = (canvas, ctx, img) => {
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = window.innerWidth * dpr;
-    canvas.height = window.innerHeight * dpr;
-    canvas.style.width = `${window.innerWidth}px`;
-    canvas.style.height = `${window.innerHeight}px`;
+  const updateCanvasSize = (canvas) => {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2); // Cap DPR at 2 for performance
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    
+    if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+    }
+  };
 
+  const drawToCanvas = (canvas, img) => {
+    const ctx = canvas.getContext("2d", { alpha: false });
+    if (!ctx) return;
+
+    updateCanvasSize(canvas);
+
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(dpr, dpr);
 
-    const canvasRatio = window.innerWidth / window.innerHeight;
+    const canvasWidth = window.innerWidth;
+    const canvasHeight = window.innerHeight;
+    const canvasRatio = canvasWidth / canvasHeight;
     const imgRatio = img.width / img.height;
-    let drawWidth = window.innerWidth;
-    let drawHeight = window.innerHeight;
+
+    let drawWidth = canvasWidth;
+    let drawHeight = canvasHeight;
 
     if (canvasRatio > imgRatio) {
-      drawHeight = window.innerWidth / imgRatio;
+      drawHeight = canvasWidth / imgRatio;
     } else {
-      drawWidth = window.innerHeight * imgRatio;
+      drawWidth = canvasHeight * imgRatio;
     }
 
-    const offsetX = (window.innerWidth - drawWidth) / 2;
-    const offsetY = (window.innerHeight - drawHeight) / 2;
+    const offsetX = (canvasWidth - drawWidth) / 2;
+    const offsetY = (canvasHeight - drawHeight) / 2;
 
     ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "high";
+    ctx.imageSmoothingQuality = "medium"; // Use medium for better performance
 
     ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
   };
