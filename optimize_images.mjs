@@ -18,7 +18,7 @@ const CONFIG = {
 const SIZES = {
   desktop: 1920,
   tablet: 1024,
-  mobile: 640
+  mobile: 900
 };
 
 async function processImages() {
@@ -37,9 +37,6 @@ async function processImages() {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         
-        // Skip frames on mobile to reduce load (e.g., every 2nd frame)
-        if (sizeKey === 'mobile' && i % 2 !== 0) continue;
-
         const inputPath = path.join(settings.src, file);
         const outputFileName = file.replace(settings.ext, '.webp');
         const outputPath = path.join(destDir, outputFileName);
