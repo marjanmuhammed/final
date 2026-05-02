@@ -11,7 +11,7 @@ const status = {
 const getDeviceSize = () => {
   const width = window.innerWidth;
   if (width < 640) return 'mobile';
-  if (width < 1024) return 'tablet';
+  if (width < 1200) return 'tablet';
   return 'desktop';
 };
 
@@ -53,11 +53,9 @@ export const preloadAll = async () => {
   const heroTemplate = `/images/hero_optimized/${deviceSize}/ezgif-frame-{idx}.webp`;
   const aboutTemplate = `/images/about_optimized/${deviceSize}/ezgif-frame-{idx}.webp`;
   
-  // Aggressive skipping for mobile to save memory
-  // mobile: step 3 (loads 1/3 of frames)
-  // tablet: step 2 (loads 1/2 of frames)
-  // desktop: step 1 (loads all frames)
-  const step = deviceSize === 'mobile' ? 3 : (deviceSize === 'tablet' ? 2 : 1);
+  // mobile: step 2 (smoother than 3, loads 1/2 of frames)
+  // tablet/desktop: step 1 (full quality)
+  const step = deviceSize === 'mobile' ? 2 : 1;
 
   // Phase 1: ONLY Critical Hero frames first
   await loadBatch('hero', 1, 60, heroTemplate, step);

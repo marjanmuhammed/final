@@ -16,9 +16,9 @@ const CONFIG = {
 };
 
 const SIZES = {
-  mobile: 480,
-  tablet: 800,
-  desktop: 1600
+  mobile: 640,
+  tablet: 1024,
+  desktop: 1920
 };
 
 async function processImages() {
@@ -33,8 +33,8 @@ async function processImages() {
       }
 
       const width = SIZES[sizeKey];
-      // Use lower quality for mobile/tablet to save memory
-      const quality = sizeKey === 'mobile' ? 60 : (sizeKey === 'tablet' ? 70 : 80);
+      // Balanced quality for clarity vs file size
+      const quality = sizeKey === 'mobile' ? 75 : (sizeKey === 'tablet' ? 80 : 85);
       
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
@@ -43,7 +43,7 @@ async function processImages() {
         const outputFileName = file.replace(settings.ext, '.webp');
         const outputPath = path.join(destDir, outputFileName);
 
-        if (true) { // Force overwrite for quality update
+        if (true) { // Force overwrite for clarity update
           await sharp(inputPath)
             .resize(width)
             .webp({ 
@@ -51,7 +51,7 @@ async function processImages() {
               effort: 6, 
               smartSubsample: true,
               lossless: false,
-              alphaQuality: 50
+              alphaQuality: 80
             })
             .toFile(outputPath);
         }

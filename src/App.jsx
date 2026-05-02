@@ -71,7 +71,7 @@ export default function App() {
 
   return (
     <>
-      <Particles id="tsparticles" init={particlesInit} options={particlesOptions} />
+      {!isMobile && <Particles id="tsparticles" init={particlesInit} options={particlesOptions} />}
       <Hummingbird />
       <Navbar />
       <main className="relative">

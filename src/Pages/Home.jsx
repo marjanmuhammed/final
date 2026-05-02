@@ -122,7 +122,7 @@ export default function Home() {
 
   const updateCanvasSize = (canvas) => {
     const isMobile = window.innerWidth < 640;
-    const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.3 : 2);
     const width = window.innerWidth;
     const height = window.innerHeight;
     
