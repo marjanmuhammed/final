@@ -16,9 +16,8 @@ const CONFIG = {
 };
 
 const SIZES = {
-  desktop: 1920,
-  tablet: 1024,
-  mobile: 900
+  mobile: 960,
+  desktop: 1920
 };
 
 async function processImages() {
@@ -41,10 +40,10 @@ async function processImages() {
         const outputFileName = file.replace(settings.ext, '.webp');
         const outputPath = path.join(destDir, outputFileName);
 
-        if (!fs.existsSync(outputPath)) {
+        if (true) { // Force overwrite for quality update
           await sharp(inputPath)
             .resize(width)
-            .webp({ quality: 75, effort: 6 })
+            .webp({ quality: 90, effort: 6, smartSubsample: true })
             .toFile(outputPath);
         }
       }
