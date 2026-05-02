@@ -10,7 +10,7 @@ const status = {
 
 const getDeviceSize = () => {
   const width = window.innerWidth;
-  if (width < 768) return 'mobile';
+  if (width < 640) return 'mobile';
   if (width < 1024) return 'tablet';
   return 'desktop';
 };
@@ -26,9 +26,23 @@ export const preloadAll = async () => {
         const img = new Image();
         const paddedIndex = i.toString().padStart(3, '0');
         img.src = template.replace('{idx}', paddedIndex);
+        
+        // Use Decode API if available for smoother loading
         img.onload = () => {
-          imageCache[type][i] = img;
-          resolve();
+          if ('decode' in img) {
+            img.decode()
+              .then(() => {
+                imageCache[type][i] = img;
+                resolve();
+              })
+              .catch(() => {
+                imageCache[type][i] = img;
+                resolve();
+              });
+          } else {
+            imageCache[type][i] = img;
+            resolve();
+          }
         };
         img.onerror = () => resolve();
       }));
@@ -39,10 +53,13 @@ export const preloadAll = async () => {
   const heroTemplate = `/images/hero_optimized/${deviceSize}/ezgif-frame-{idx}.webp`;
   const aboutTemplate = `/images/about_optimized/${deviceSize}/ezgif-frame-{idx}.webp`;
   
-  // Mobile uses every 2nd frame to save memory/CPU
-  const step = deviceSize === 'mobile' ? 2 : 1;
+  // Aggressive skipping for mobile to save memory
+  // mobile: step 3 (loads 1/3 of frames)
+  // tablet: step 2 (loads 1/2 of frames)
+  // desktop: step 1 (loads all frames)
+  const step = deviceSize === 'mobile' ? 3 : (deviceSize === 'tablet' ? 2 : 1);
 
-  // Phase 1: ONLY Critical Hero frames first (first 60)
+  // Phase 1: ONLY Critical Hero frames first
   await loadBatch('hero', 1, 60, heroTemplate, step);
   status.heroReady = true;
 

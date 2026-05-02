@@ -21,14 +21,16 @@ export default function App() {
     await loadFull(main);
   };
 
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+
   const particlesOptions = {
     background: { color: { value: "#000000" } },
-    fpsLimit: 60,
+    fpsLimit: isMobile ? 30 : 60, // Limit FPS on mobile
     interactivity: {
       detectsOn: "window",
       events: {
-        onClick: { enable: true, mode: "push" },
-        onHover: { enable: true, mode: "repulse" },
+        onClick: { enable: !isMobile, mode: "push" }, // Disable click on mobile
+        onHover: { enable: !isMobile, mode: "repulse" }, // Disable hover on mobile
         resize: true,
       },
       modes: {
@@ -46,25 +48,25 @@ export default function App() {
       links: {
         color: "#ffffff",
         distance: 150,
-        enable: true,
-        opacity: 1.0,
-        width: 1.5,
+        enable: !isMobile, // DISABLE links on mobile - big performance win
+        opacity: 0.4,
+        width: 1,
       },
       move: {
         direction: "none",
         enable: true,
         outModes: "out",
-        speed: 0.9,
+        speed: isMobile ? 0.5 : 0.9, // Slower movement on mobile
       },
       number: {
-        value: 150,
+        value: isMobile ? 40 : 150, // Significantly fewer particles on mobile
         density: { enable: true, area: 800 },
       },
-      opacity: { value: 1.0 },
+      opacity: { value: 0.6 },
       shape: { type: "circle" },
-      size: { value: { min: 2, max: 4 } },
+      size: { value: { min: 1, max: 3 } },
     },
-    detectRetina: true,
+    detectRetina: false, // Disable retina for particles on mobile
   };
 
   return (

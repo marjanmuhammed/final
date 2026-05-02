@@ -53,7 +53,8 @@ export default function About() {
   };
 
   const updateCanvasSize = (canvas) => {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const isMobile = window.innerWidth < 640;
+    const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2);
     const width = window.innerWidth;
     const height = window.innerHeight;
     
@@ -71,7 +72,8 @@ export default function About() {
 
     updateCanvasSize(canvas);
 
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const isMobile = window.innerWidth < 640;
+    const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(dpr, dpr);
 
@@ -97,8 +99,10 @@ export default function About() {
     ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
   };
 
+  const frameId = useRef(null);
   useMotionValueEvent(frameIndex, "change", (latest) => {
-    requestAnimationFrame(() => renderFrame(latest));
+    if (frameId.current) cancelAnimationFrame(frameId.current);
+    frameId.current = requestAnimationFrame(() => renderFrame(latest));
   });
 
   useEffect(() => {

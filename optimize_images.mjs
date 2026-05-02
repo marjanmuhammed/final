@@ -16,8 +16,9 @@ const CONFIG = {
 };
 
 const SIZES = {
-  mobile: 960,
-  desktop: 1920
+  mobile: 480,
+  tablet: 800,
+  desktop: 1600
 };
 
 async function processImages() {
@@ -32,6 +33,8 @@ async function processImages() {
       }
 
       const width = SIZES[sizeKey];
+      // Use lower quality for mobile/tablet to save memory
+      const quality = sizeKey === 'mobile' ? 60 : (sizeKey === 'tablet' ? 70 : 80);
       
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
@@ -43,7 +46,13 @@ async function processImages() {
         if (true) { // Force overwrite for quality update
           await sharp(inputPath)
             .resize(width)
-            .webp({ quality: 90, effort: 6, smartSubsample: true })
+            .webp({ 
+              quality: quality, 
+              effort: 6, 
+              smartSubsample: true,
+              lossless: false,
+              alphaQuality: 50
+            })
             .toFile(outputPath);
         }
       }
