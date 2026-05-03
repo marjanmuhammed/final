@@ -21,7 +21,8 @@ export default function ParticlesBackground() {
             init={particlesInit}
             loaded={particlesLoaded}
             options={{
-                fpsLimit: 60,
+                fpsLimit: 30,
+
                 fullScreen: { enable: true, zIndex: -1 },
                 background: {
                     color: {

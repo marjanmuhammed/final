@@ -7,7 +7,9 @@ import {
   FaCogs,
   FaPlug,
   FaWrench,
+  FaArrowRight,
 } from "react-icons/fa";
+import { usePerformance } from "../context/PerformanceContext";
 
 // Only 4 logos as per request
 const techLogos = [
@@ -29,7 +31,7 @@ const techLogos = [
   },
 ];
 
-const AnimatedBox = ({ delay, src, name }) => {
+const AnimatedBox = ({ delay, src, name, isLowEnd }) => {
   const boxStyle = {
     width: "140px",
     height: "140px",
@@ -51,11 +53,14 @@ const AnimatedBox = ({ delay, src, name }) => {
     height: "100%",
     borderRadius: "16px",
     padding: "2px",
-    background: "conic-gradient(cyan, transparent, cyan)",
+    background: isLowEnd 
+      ? "linear-gradient(cyan, transparent, cyan)" 
+      : "conic-gradient(cyan, transparent, cyan)",
     WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
     WebkitMaskComposite: "xor",
     maskComposite: "exclude",
-    animation: `rotateLight 6s linear infinite`,
+    animation: `rotateLight ${isLowEnd ? '10s' : '6s'} linear infinite`,
+
     animationDelay: delay,
     zIndex: 2,
     pointerEvents: "none",
@@ -76,6 +81,7 @@ const AnimatedBox = ({ delay, src, name }) => {
 };
 
 const Animation = () => {
+  const { isLowEnd } = usePerformance();
   const containerStyle = {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
@@ -103,6 +109,7 @@ const Animation = () => {
             src={logo.src}
             name={logo.name}
             delay={`${index * 0.4}s`}
+            isLowEnd={isLowEnd}
           />
         ))}
       </div>

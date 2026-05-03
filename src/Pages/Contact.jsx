@@ -47,10 +47,16 @@ const hyperspeedOptions = {
 
 const liteHyperspeedOptions = {
   ...hyperspeedOptions,
-  length: 200,
-  lanesPerRoad: 2,
-  totalSideLightSticks: 5,
-  lightPairsPerRoadWay: 10,
+  length: 150,
+  lanesPerRoad: 1,
+  totalSideLightSticks: 2,
+  lightPairsPerRoadWay: 5,
+  carLightsFade: 0.1,
+  colors: {
+    ...hyperspeedOptions.colors,
+    leftCars: [0xd856bf],
+    rightCars: [0x03b3c3],
+  }
 };
 
 export default function Contact() {
@@ -154,10 +160,11 @@ export default function Contact() {
 
           {/* Contact Form */}
           <div className="relative p-8 rounded-2xl bg-white/5 border border-white/10 shadow-2xl overflow-hidden group">
-            {/* Hyperspeed Effect Background */}
+            {/* Hyperspeed Effect Background - Ultra Lite for Low-End Mode */}
             <div className="absolute inset-0 z-0 opacity-60 pointer-events-none">
               <Hyperspeed effectOptions={isLowEnd ? liteHyperspeedOptions : hyperspeedOptions} />
             </div>
+
 
 
             <form ref={form} onSubmit={sendEmail} className="relative z-10 space-y-6">

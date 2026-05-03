@@ -39,7 +39,8 @@ function AppContent() {
           <CinematicBackground containerRef={cinematicContainerRef} />
         )}
         
-        {!isLowEnd && <Hummingbird />}
+        <Hummingbird />
+
 
         
         <Navbar />
