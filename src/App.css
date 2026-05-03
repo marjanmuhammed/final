@@ -11,3 +11,9 @@
   51% { transform: scaleX(1); transform-origin: right; }
   100% { transform: scaleX(0); transform-origin: right; }
 }
+
+/* Hides black background for first 0.1s then fades out over 0.3s */
+@keyframes fadeOutBlack {
+  0%   { opacity: 1; }
+  100% { opacity: 0; visibility: hidden; }
+}
