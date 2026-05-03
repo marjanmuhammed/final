@@ -26,9 +26,11 @@ export default function PerformanceGuard({ children }) {
       localStorage.removeItem("performance_choice");
     }
 
-    // Reverting to a stricter check: only truly low-end devices (<= 4GB RAM AND <= 4 Cores)
-    // Most modern mid-range phones will now get the High-End experience.
-    const isLowEndDevice = forceLow || (isMobile && memory <= 4 && cores <= 4);
+    // Detection Logic Update: 
+    // Many 4GB RAM devices have 8 cores, so we check for low memory OR low cores.
+    // Also, we use <= 6 for memory to be safe, as some 4GB devices report slightly different values.
+    const isLowEndDevice = forceLow || (isMobile && (memory <= 4 || cores <= 6));
+
 
     
     console.log("Device Specs:", { memory, cores, isMobile, forceLow, isLowEndDevice });
