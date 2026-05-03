@@ -76,29 +76,30 @@ export default function CinematicBackground({ containerRef }) {
     const video = videoRef.current;
     if (!video || !isReady) return;
 
-    // LERP tuning: lower is smoother on weak CPUs
-    const LERP = isMobile ? 0.07 : 0.12;
-    // Seek frequency: desktop 30fps, mobile 18fps (prevents decoder choking)
-    const SEEK_RATE = isMobile ? 55 : 33; 
-
+    // LERP tuning: lower is smoother and 'heavier'
+    const LERP = isMobile ? 0.05 : 0.1;
+    // Base seek rate (ms)
+    let seekRate = isMobile ? 60 : 33; 
+    
     let rafId;
     let running = true;
+    let seekStartTime = 0;
 
     const update = (now) => {
       if (!running) return;
 
       const diff = targetProgress.current - currentProgress.current;
       if (Math.abs(diff) > 0.0001) {
-        // Smoothly interpolate towards target
         currentProgress.current += diff * LERP;
 
-        // Perform seek only if enough time has passed and we aren't currently seeking
-        if (!isSeeking.current && (now - lastSeekTime.current > SEEK_RATE)) {
+        // Perform seek only if not busy and enough time passed
+        if (!isSeeking.current && (now - lastSeekTime.current > seekRate)) {
           if (video.readyState >= 2) {
             const d = videoDur.current;
             const t = VIDEO_START_OFFSET + currentProgress.current * (d - VIDEO_START_OFFSET);
             
             isSeeking.current = true;
+            seekStartTime = now;
             video.currentTime = Math.max(VIDEO_START_OFFSET, Math.min(d - 0.05, t));
             lastSeekTime.current = now;
           }
@@ -108,7 +109,17 @@ export default function CinematicBackground({ containerRef }) {
       rafId = requestAnimationFrame(update);
     };
 
-    const onSeeked = () => { isSeeking.current = false; };
+    const onSeeked = () => { 
+      isSeeking.current = false; 
+      // Dynamic performance adjustment:
+      // If a seek takes > 100ms, slow down the rate to prevent lag
+      const seekDuration = performance.now() - seekStartTime;
+      if (seekDuration > 100) {
+        seekRate = Math.min(seekRate + 10, 200); 
+      } else if (seekDuration < 30) {
+        seekRate = Math.max(seekRate - 2, isMobile ? 50 : 30);
+      }
+    };
     video.addEventListener("seeked", onSeeked);
 
     rafId = requestAnimationFrame(update);
@@ -233,8 +244,10 @@ export default function CinematicBackground({ containerRef }) {
           muted playsInline preload="auto"
           className="w-full h-full object-cover"
           style={{
-            transform: "translateZ(0)",
+            transform: "translate3d(0,0,0)",
             willChange: "transform",
+            backfaceVisibility: "hidden",
+            perspective: "1000px",
             imageRendering: "high-quality",
           }}
         />
