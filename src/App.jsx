@@ -12,7 +12,9 @@ import Hummingbird from "./components/Hummingbird";
 import CinematicBackground from "./components/CinematicBackground";
 import PerformanceGuard from "./components/PerformanceGuard";
 import ParticlesBackground from "./components/ParticlesBackground";
+import PerformanceToggle from "./components/PerformanceToggle";
 import { PerformanceProvider, usePerformance } from "./context/PerformanceContext";
+
 
 import "./App.css";
 
@@ -44,6 +46,9 @@ function AppContent() {
 
         
         <Navbar />
+        
+        <PerformanceToggle />
+
 
         
         <main className="relative">

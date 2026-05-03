@@ -76,6 +76,8 @@ export default function PerformanceGuard({ children }) {
             </p>
 
 
+
+
             <div className="grid grid-cols-1 gap-4 w-full">
               <button
                 onClick={handleContinue}

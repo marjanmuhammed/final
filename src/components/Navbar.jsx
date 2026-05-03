@@ -4,6 +4,7 @@ import { FiMenu, FiX, FiSearch } from "react-icons/fi";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
 
