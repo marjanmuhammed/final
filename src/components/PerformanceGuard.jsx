@@ -71,20 +71,17 @@ export default function PerformanceGuard({ children }) {
             </h2>
             
             <p className="text-white/60 text-sm leading-relaxed mb-8">
-              ⚠️ Your device may not support the full 3d scrollbased experience. <br/>
-              For best performance, use a high-end device or pc.
+              ⚠️ Your device may not support the full 3D scroll-based experience. <br/>
+              For best performance, use a high end device or PC, or continue with low end mode.
             </p>
-
-
-
 
             <div className="grid grid-cols-1 gap-4 w-full">
               <button
                 onClick={handleContinue}
-                className="w-full py-4 bg-white text-black font-bold rounded-xl hover:bg-white/90 transition-all active:scale-95 flex items-center justify-center gap-2"
+                className="w-full py-4 bg-white text-black font-bold rounded-xl hover:bg-white/90 transition-all active:scale-95 flex items-center justify-center gap-2 shadow-xl"
               >
                 <Zap className="w-4 h-4" />
-                Continue Anyway
+                Continue with Low End Mode
               </button>
               
               <button
@@ -96,8 +93,9 @@ export default function PerformanceGuard({ children }) {
             </div>
 
             <p className="mt-8 text-[10px] text-white/20 uppercase tracking-[0.2em]">
-              Low-End Mode will be enabled
+              Performance Optimization Active
             </p>
+
           </div>
 
 

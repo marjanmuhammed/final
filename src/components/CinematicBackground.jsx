@@ -34,42 +34,56 @@ export default function CinematicBackground({ containerRef }) {
   const getProgress = useCallback(() => {
     const el = containerRef?.current;
     if (!el) return 0;
-    const scrolled = window.scrollY - el.offsetTop;
+    
+    // Use lenis scroll if available, otherwise native scroll
+    const scrollY = window.lenis ? window.lenis.scroll : window.scrollY;
+    
+    const scrolled = scrollY - el.offsetTop;
     const scrollable = el.offsetHeight - window.innerHeight;
     if (scrollable <= 0) return 0;
     return Math.min(Math.max(scrolled / scrollable, 0), 1);
   }, [containerRef]);
 
   useEffect(() => {
-    let ticking = false;
+    const el = containerRef.current;
+    const wrapper = wrapperRef.current;
+
     const onScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          targetProgress.current = getProgress();
-          
-          // Visibility optimization
-          const el = containerRef.current;
-          const wrapper = wrapperRef.current;
-          if (el && wrapper) {
-            const bottom = el.offsetTop + el.offsetHeight;
-            const s = window.scrollY;
-            const fadeStart = bottom - window.innerHeight * 0.5;
-            if (s > bottom + 200) {
-              wrapper.style.visibility = "hidden";
-            } else {
-              wrapper.style.visibility = "visible";
-              wrapper.style.opacity = s > fadeStart ? Math.max(0, 1 - (s - fadeStart) / 400) : 1;
-            }
-          }
-          ticking = false;
-        });
-        ticking = true;
+      targetProgress.current = getProgress();
+      
+      // Visibility optimization
+      if (el && wrapper) {
+        const bottom = el.offsetTop + el.offsetHeight;
+        const scrollY = window.lenis ? window.lenis.scroll : window.scrollY;
+        const fadeStart = bottom - window.innerHeight * 0.5;
+        
+        if (scrollY > bottom + 200) {
+          wrapper.style.visibility = "hidden";
+        } else {
+          wrapper.style.visibility = "visible";
+          wrapper.style.opacity = scrollY > fadeStart ? Math.max(0, 1 - (scrollY - fadeStart) / 400) : 1;
+        }
       }
     };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    targetProgress.current = getProgress();
-    return () => window.removeEventListener("scroll", onScroll);
+
+    // Listen to lenis if available
+    if (window.lenis) {
+      window.lenis.on('scroll', onScroll);
+    } else {
+      window.addEventListener("scroll", onScroll, { passive: true });
+    }
+
+    onScroll(); // Initial call
+
+    return () => {
+      if (window.lenis) {
+        window.lenis.off('scroll', onScroll);
+      } else {
+        window.removeEventListener("scroll", onScroll);
+      }
+    };
   }, [getProgress, containerRef]);
+
 
   // ── 2. The High-Performance Animation Loop ──────────────────────────────────
   useEffect(() => {

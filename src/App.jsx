@@ -1,4 +1,6 @@
 import React, { useRef, useEffect } from "react";
+import Lenis from "lenis";
+import "lenis/dist/lenis.css";
 
 import Navbar from "./components/Navbar";
 import Home from "./Pages/Home";
@@ -17,8 +19,6 @@ import ChatBot from "./components/ChatBot";
 import FloatingResumeButton from "./components/FloatingResumeButton";
 import { PerformanceProvider, usePerformance } from "./context/PerformanceContext";
 
-
-
 import "./App.css";
 
 // Always start at the top on refresh — ensures video plays from frame 0
@@ -30,7 +30,36 @@ function AppContent() {
   const { isLowEnd } = usePerformance();
   const cinematicContainerRef = useRef(null);
 
-  // Force scroll to top on every mount (page load / refresh)
+  // 1. Lenis Smooth Scroll Setup
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: "vertical",
+      gestureOrientation: "vertical",
+      smoothWheel: true,
+      wheelMultiplier: 1,
+      smoothTouch: false,
+      touchMultiplier: 2,
+      infinite: false,
+    });
+
+    function raf(time) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+
+    requestAnimationFrame(raf);
+
+    // Sync with global window for potential external access
+    window.lenis = lenis;
+
+    return () => {
+      lenis.destroy();
+    };
+  }, []);
+
+  // 2. Force scroll to top on every mount (page load / refresh)
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
@@ -45,20 +74,11 @@ function AppContent() {
         )}
         
         <Hummingbird />
-
-
-        
         <Navbar />
-        
         <PerformanceToggle />
-        
         <ChatBot />
-
         <FloatingResumeButton />
 
-
-
-        
         <main className="relative">
           <div ref={cinematicContainerRef} className={isLowEnd ? "min-h-screen" : "h-[800dvh]"}>
             <section id="home"><Home /></section>
@@ -82,5 +102,3 @@ export default function App() {
     </PerformanceProvider>
   );
 }
-
-
