@@ -32,7 +32,7 @@ export default function About() {
   ];
 
   return (
-    <div ref={containerRef} id="about" className="relative w-full min-h-[400dvh] bg-transparent font-montserrat text-white">
+    <div ref={containerRef} id="about" className="relative w-full h-[400dvh] overflow-hidden bg-transparent font-montserrat text-white">
       <div className="relative z-10 px-4 md:px-10 py-16 pt-[15vh]">
         <motion.main
           className="relative max-w-5xl mx-auto z-10"

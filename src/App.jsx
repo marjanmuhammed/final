@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useEffect } from "react";
 
 import Navbar from "./components/Navbar";
 import Home from "./Pages/Home";
@@ -15,9 +15,19 @@ import "./App.css";
 import Particles from "react-tsparticles";
 import { loadFull } from "tsparticles";
 
+// Always start at the top on refresh — ensures video plays from frame 0
+if (typeof window !== "undefined") {
+  history.scrollRestoration = "manual";
+}
+
 export default function App() {
   const cinematicContainerRef = useRef(null);
-  
+
+  // Force scroll to top on every mount (page load / refresh)
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, []);
+
   const particlesInit = async (main) => {
     await loadFull(main);
   };
@@ -77,7 +87,7 @@ export default function App() {
       <Hummingbird />
       <Navbar />
       <main className="relative">
-        <div ref={cinematicContainerRef}>
+        <div ref={cinematicContainerRef} className="h-[800dvh]">
           <section id="home"><Home /></section>
           <section id="about"><About /></section>
         </div>

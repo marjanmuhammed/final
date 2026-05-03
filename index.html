@@ -12,6 +12,18 @@
 </head>
 
 <body>
+  <!-- Critical: Disable scroll restoration BEFORE React mounts -->
+  <!-- This prevents the browser restoring mid-scroll on refresh -->
+  <script>
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+    // Force scroll to top immediately — runs before any JS module
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  </script>
+
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
 
