@@ -6,8 +6,10 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Hyperspeed from "../components/Hyperspeed";
 import Terminal from "../components/Terminal";
+import { usePerformance } from "../context/PerformanceContext";
 
 const hyperspeedOptions = {
+
   distortion: 'turbulentDistortion',
   length: 400,
   roadWidth: 10,
@@ -44,6 +46,7 @@ const hyperspeedOptions = {
 };
 
 export default function Contact() {
+  const { isLowEnd } = usePerformance();
   const form = useRef();
 
   const sendEmail = (e) => {
@@ -147,6 +150,7 @@ export default function Contact() {
             <div className="absolute inset-0 z-0 opacity-60 pointer-events-none">
               <Hyperspeed effectOptions={hyperspeedOptions} />
             </div>
+
 
             <form ref={form} onSubmit={sendEmail} className="relative z-10 space-y-6">
               <div>

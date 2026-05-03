@@ -1,0 +1,107 @@
+import React, { useState, useEffect } from "react";
+import { AlertTriangle, Zap } from "lucide-react";
+import { usePerformance } from "../context/PerformanceContext";
+
+export default function PerformanceGuard({ children }) {
+  const { isLowEnd, setIsLowEnd } = usePerformance();
+  const [showModal, setShowModal] = useState(false);
+  const [hasChoice, setHasChoice] = useState(false);
+
+  useEffect(() => {
+    // 1. Detection Logic
+    const memory = navigator.deviceMemory || 8; 
+    const cores = navigator.hardwareConcurrency || 8; 
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
+
+    // URL override for testing: ?performance=low or ?performance=reset
+    const urlParams = new URLSearchParams(window.location.search);
+    const forceLow = urlParams.get("performance") === "low";
+    const forceReset = urlParams.get("performance") === "reset";
+
+    if (forceReset) {
+      localStorage.removeItem("performance_choice");
+    }
+
+    // Reverting to a stricter check: only truly low-end devices (<= 4GB RAM AND <= 4 Cores)
+    // Most modern mid-range phones will now get the High-End experience.
+    const isLowEndDevice = forceLow || (isMobile && memory <= 4 && cores <= 4);
+
+    
+    console.log("Device Specs:", { memory, cores, isMobile, forceLow, isLowEndDevice });
+
+
+    const savedChoice = localStorage.getItem("performance_choice");
+
+    if (isLowEndDevice && !savedChoice) {
+      setShowModal(true);
+    } else {
+      const mode = (isLowEndDevice && savedChoice === "low") || forceLow;
+      setIsLowEnd(mode);
+      setHasChoice(true);
+    }
+  }, [setIsLowEnd]);
+
+
+  const handleContinue = () => {
+    localStorage.setItem("performance_choice", "low");
+    setIsLowEnd(true);
+    setShowModal(false);
+    setHasChoice(true);
+  };
+
+  const handleExit = () => {
+    window.location.href = "https://www.google.com";
+  };
+
+  if (showModal) {
+    return (
+      <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/95 backdrop-blur-md p-6 font-montserrat text-white">
+        <div className="max-w-md w-full bg-[#111] border border-white/10 rounded-2xl p-8 shadow-2xl relative overflow-hidden group">
+          <div className="absolute -top-24 -left-24 w-48 h-48 bg-blue-500/10 blur-[100px] rounded-full" />
+          <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-red-500/10 blur-[100px] rounded-full" />
+
+          <div className="relative z-10 flex flex-col items-center text-center">
+            <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mb-6">
+              <AlertTriangle className="text-amber-500 w-8 h-8" />
+            </div>
+
+            <h2 className="text-2xl font-bold text-white mb-4 tracking-tight">
+              Performance Warning
+            </h2>
+            
+            <p className="text-white/60 text-sm leading-relaxed mb-8">
+              ⚠️ Your device may not support the full experience. <br/>
+              For best performance, use a high-end device.
+            </p>
+
+            <div className="grid grid-cols-1 gap-4 w-full">
+              <button
+                onClick={handleContinue}
+                className="w-full py-4 bg-white text-black font-bold rounded-xl hover:bg-white/90 transition-all active:scale-95 flex items-center justify-center gap-2"
+              >
+                <Zap className="w-4 h-4" />
+                Continue Anyway
+              </button>
+              
+              <button
+                onClick={handleExit}
+                className="w-full py-4 bg-transparent text-white/40 font-medium rounded-xl border border-white/5 hover:bg-white/5 hover:text-white transition-all active:scale-95"
+              >
+                Exit
+              </button>
+            </div>
+
+            <p className="mt-8 text-[10px] text-white/20 uppercase tracking-[0.2em]">
+              Low-End Mode will be enabled
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return hasChoice ? children : null;
+}
+

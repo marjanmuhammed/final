@@ -1,7 +1,9 @@
 import React, { useRef, useEffect } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
+import { usePerformance } from "../context/PerformanceContext";
 
 import {
+// ... icons
   FaPhoneAlt, FaMapMarkerAlt, FaGraduationCap, FaEnvelope,
   FaLaptopCode, FaClock, FaHtml5, FaCss3Alt, FaBootstrap,
   FaJs, FaReact, FaGitAlt, FaHashtag
@@ -9,6 +11,7 @@ import {
 import { SiTailwindcss, SiRedux } from "react-icons/si";
 
 export default function About() {
+  const { isLowEnd } = usePerformance();
   const containerRef = useRef(null);
 
   const fadeUpVariant = {
@@ -32,8 +35,9 @@ export default function About() {
   ];
 
   return (
-    <div ref={containerRef} id="about" className="relative w-full h-[400dvh] overflow-hidden bg-transparent font-montserrat text-white">
-      <div className="relative z-10 px-4 md:px-10 py-16 pt-[15vh]">
+    <div ref={containerRef} id="about" className={`relative w-full ${isLowEnd ? "h-[100dvh]" : "h-[400dvh]"} overflow-hidden bg-transparent font-montserrat text-white`}>
+
+      <div className={`relative z-10 px-4 md:px-10 py-16 ${isLowEnd ? "pt-10" : "pt-[15vh]"}`}>
         <motion.main
           className="relative max-w-5xl mx-auto z-10"
           initial="hidden"

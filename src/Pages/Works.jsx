@@ -2,8 +2,10 @@ import { motion } from "framer-motion";
 import work1 from "../assets/works-1.jpg";
 import work2 from "../assets/works-2.jpg";
 import work3 from "../assets/works-3.png";
+import { usePerformance } from "../context/PerformanceContext";
 
 export default function Work() {
+  const { isLowEnd } = usePerformance();
   const projects = [
     {
       title: "7 Up Website",
@@ -65,7 +67,7 @@ export default function Work() {
               custom={i}
             >
               <div className="relative aspect-video w-full group">
-                {type === "image" ? (
+                {type === "image" || isLowEnd ? (
                   <motion.img
                     src={imageUrl}
                     alt={title}

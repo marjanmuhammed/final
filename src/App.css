@@ -1,8 +1,35 @@
 #tsparticles {
-  position: absolute;
+  position: fixed !important;
+  inset: 0;
   width: 100%;
   height: 100%;
   z-index: -1;
+  background-color: #000000;
+  display: block !important;
+  opacity: 1 !important;
+  pointer-events: none;
+}
+
+
+/* Low-End Mode Global Styles */
+.low-end-mode {
+  background-color: transparent !important;
+  color: #ffffff;
+}
+
+
+.low-end-mode section {
+  background-color: transparent !important;
+}
+
+/* Ensure sections that might have gradients or other backgrounds are cleaned up */
+.low-end-mode #home,
+.low-end-mode #about,
+.low-end-mode #services,
+.low-end-mode #work,
+.low-end-mode #resume,
+.low-end-mode #contact {
+  background: transparent !important;
 }
 
 @keyframes loading {
@@ -23,3 +50,4 @@
   0%   { transform: translateX(-100%); }
   100% { transform: translateX(200%); }
 }
+

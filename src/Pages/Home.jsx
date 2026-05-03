@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion as Motion, useScroll, useTransform } from "framer-motion";
 import { useInView } from "react-intersection-observer";
+import { usePerformance } from "../context/PerformanceContext";
 
 const roles = ["Full Stack Developer", "Freelancer", "Designer"];
 
 export default function Home() {
+  const { isLowEnd } = usePerformance();
   const [index, setIndex] = useState(0);
   const [displayedText, setDisplayedText] = useState("");
   const [charIndex, setCharIndex] = useState(0);
@@ -47,13 +49,16 @@ export default function Home() {
   return (
     <div
       ref={containerRef}
-      className="h-[400dvh] relative w-full bg-transparent"
+      className={`${isLowEnd ? "h-[100dvh]" : "h-[400dvh]"} relative w-full bg-transparent`}
     >
-      <div ref={viewRef} className="sticky top-0 w-full h-[100dvh] overflow-hidden flex flex-col justify-center items-center bg-transparent">
+      <div ref={viewRef} className={`${isLowEnd ? "relative" : "sticky top-0"} w-full h-[100dvh] overflow-hidden flex flex-col justify-center items-center bg-transparent`}>
         <Motion.div
           id="home"
-          style={{ opacity: textOpacity, y: textY }}
-          className="fixed inset-0 z-[9999] flex flex-col justify-center items-center px-4 md:px-10 max-w-full overflow-x-hidden pointer-events-none"
+          style={{ 
+            opacity: isLowEnd ? 1 : textOpacity, 
+            y: isLowEnd ? 0 : textY 
+          }}
+          className={`${isLowEnd ? "relative" : "fixed inset-0"} z-[9999] flex flex-col justify-center items-center px-4 md:px-10 w-full overflow-x-hidden pointer-events-none`}
         >
           <h1 className="text-center text-4xl md:text-5xl lg:text-7xl font-extrabold mb-4 md:mb-6 tracking-tight">
             <span className="text-white drop-shadow-lg mr-2 md:mr-3">I am</span>
@@ -61,6 +66,7 @@ export default function Home() {
               Muhammad Marjan KK
             </span>
           </h1>
+
 
           <div className="flex flex-wrap justify-center items-center mb-6 md:mb-8 text-lg md:text-3xl font-light whitespace-nowrap tracking-wide">
             <span className="mr-2 md:mr-3 text-gray-300 drop-shadow-md">I am</span>
