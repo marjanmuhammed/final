@@ -59,7 +59,9 @@ const AnimatedBox = ({ delay, src, name, isLowEnd }) => {
     WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
     WebkitMaskComposite: "xor",
     maskComposite: "exclude",
-    animation: `rotateLight ${isLowEnd ? '10s' : '6s'} linear infinite`,
+    animation: isLowEnd ? 'none' : `rotateLight 6s linear infinite`,
+    border: isLowEnd ? '1px solid rgba(0, 255, 255, 0.3)' : 'none',
+
 
     animationDelay: delay,
     zIndex: 2,

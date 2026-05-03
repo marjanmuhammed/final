@@ -261,17 +261,21 @@ export default function ChatBot() {
                           <a 
                             href={msg.fileUrl} 
                             target="_blank" 
+                            rel="noopener noreferrer"
                             className="flex items-center justify-center gap-2 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[10px] text-white transition-all"
                           >
                             <Eye size={14} /> View
                           </a>
                           <a 
                             href={msg.fileUrl} 
-                            download 
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            download="Marjan_Resume.pdf"
                             className="flex items-center justify-center gap-2 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-[10px] text-white transition-all"
                           >
                             <Download size={14} /> Download
                           </a>
+
                         </div>
                       </div>
                     )}
