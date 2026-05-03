@@ -13,9 +13,8 @@ export default function PerformanceGuard({ children }) {
     // 1. Detection Logic
     const memory = navigator.deviceMemory || 8; 
     const cores = navigator.hardwareConcurrency || 8; 
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent
-    );
+    const isAndroid = /Android/i.test(navigator.userAgent);
+
 
     // URL override for testing: ?performance=low or ?performance=reset
     const urlParams = new URLSearchParams(window.location.search);
@@ -27,13 +26,11 @@ export default function PerformanceGuard({ children }) {
     }
 
     // Detection Logic Update: 
-    // Many 4GB RAM devices have 8 cores, so we check for low memory OR low cores.
-    // Also, we use <= 6 for memory to be safe, as some 4GB devices report slightly different values.
-    const isLowEndDevice = forceLow || (isMobile && (memory <= 4 || cores <= 6));
-
-
+    // Target only Android for the low-end check. iPhones are excluded.
+    const isLowEndDevice = forceLow || (isAndroid && (memory <= 4 || cores <= 6));
     
-    console.log("Device Specs:", { memory, cores, isMobile, forceLow, isLowEndDevice });
+    console.log("Device Specs:", { memory, cores, isAndroid, forceLow, isLowEndDevice });
+
 
     // We no longer check savedChoice for showing the modal if it's a low-end device.
     // This ensures it shows on every refresh as requested.

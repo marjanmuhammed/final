@@ -61,19 +61,19 @@ export default function ParticlesBackground() {
                             enable: true,
                             area: 800,
                         },
-                        value: 35, // LOW count
+                        value: 20, // Reduced from 35 for better performance
                     },
                     opacity: {
-                        value: 0.3, // Subtle
+                        value: 0.2, // More subtle
                     },
                     shape: {
                         type: "circle",
                     },
                     size: {
-                        value: { min: 1, max: 3 },
+                        value: { min: 1, max: 2 },
                     },
                 },
-                detectRetina: true,
+                detectRetina: false, // Disabled for performance
             }}
         />
     );

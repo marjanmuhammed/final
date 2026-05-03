@@ -45,6 +45,14 @@ const hyperspeedOptions = {
   }
 };
 
+const liteHyperspeedOptions = {
+  ...hyperspeedOptions,
+  length: 200,
+  lanesPerRoad: 2,
+  totalSideLightSticks: 5,
+  lightPairsPerRoadWay: 10,
+};
+
 export default function Contact() {
   const { isLowEnd } = usePerformance();
   const form = useRef();
@@ -148,7 +156,7 @@ export default function Contact() {
           <div className="relative p-8 rounded-2xl bg-white/5 border border-white/10 shadow-2xl overflow-hidden group">
             {/* Hyperspeed Effect Background */}
             <div className="absolute inset-0 z-0 opacity-60 pointer-events-none">
-              <Hyperspeed effectOptions={hyperspeedOptions} />
+              <Hyperspeed effectOptions={isLowEnd ? liteHyperspeedOptions : hyperspeedOptions} />
             </div>
 
 
