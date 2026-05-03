@@ -18,7 +18,9 @@ export default function CinematicBackground({ containerRef }) {
   const wrapperRef = useRef(null);
   
   const [isReady, setIsReady] = useState(false);
-  const [bufferPct, setBufferPct] = useState(0);
+  const [minTimeMet, setMinTimeMet] = useState(false);
+  const [canShowSite, setCanShowSite] = useState(false);
+  const [displayPct, setDisplayPct] = useState(0);
   const [loaderVisible, setLoaderVisible] = useState(true);
 
   // Core state refs
@@ -117,7 +119,37 @@ export default function CinematicBackground({ containerRef }) {
     };
   }, [isReady]);
 
-  // ── 3. Video Preloading & Setup ─────────────────────────────────────────────
+  // ── 3. Loader Controller (5 Seconds Progress) ───────────────────────────────
+  useEffect(() => {
+    const startTime = Date.now();
+    const duration = 5000;
+
+    const timer = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      // Smoothly update percentage display
+      setDisplayPct(Math.floor(progress * 100));
+
+      if (progress >= 1) {
+        clearInterval(timer);
+        setMinTimeMet(true);
+      }
+    }, 16); // ~60fps updates for smooth bar
+
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    // Reveal ONLY when video is ready AND 5 seconds have passed
+    if (isReady && minTimeMet) {
+      setCanShowSite(true);
+      const hideTimer = setTimeout(() => setLoaderVisible(false), 1000);
+      return () => clearTimeout(hideTimer);
+    }
+  }, [isReady, minTimeMet]);
+
+  // ── 4. Video Preloading & Setup ─────────────────────────────────────────────
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -126,10 +158,8 @@ export default function CinematicBackground({ containerRef }) {
       if (video.buffered.length > 0 && video.duration) {
         const end = video.buffered.end(video.buffered.length - 1);
         const pct = Math.round((end / video.duration) * 100);
-        setBufferPct(pct);
         if (pct >= 95 || end >= video.duration - 0.5) {
           setIsReady(true);
-          setTimeout(() => setLoaderVisible(false), 600);
         }
       }
     };
@@ -141,8 +171,6 @@ export default function CinematicBackground({ containerRef }) {
 
     const onCanPlayThrough = () => {
       setIsReady(true);
-      setBufferPct(100);
-      setTimeout(() => setLoaderVisible(false), 600);
     };
 
     video.addEventListener("loadedmetadata", onMetadata);
@@ -162,21 +190,28 @@ export default function CinematicBackground({ containerRef }) {
       {/* ── Branded Loader ── */}
       {loaderVisible && (
         <div 
-          className="fixed inset-0 bg-black flex flex-col items-center justify-center z-[99999] transition-opacity duration-700"
-          style={{ opacity: isReady ? 0 : 1, pointerEvents: isReady ? 'none' : 'all' }}
+          className="fixed inset-0 bg-black flex flex-col items-center justify-center z-[99999]"
+          style={{ 
+            opacity: canShowSite ? 0 : 1,
+            transition: "opacity 0.8s ease-in-out",
+            pointerEvents: canShowSite ? "none" : "all"
+          }}
         >
           <div className="flex flex-col items-center gap-6">
-            <h2 className="text-white/20 text-[10px] tracking-[0.8em] uppercase animate-pulse font-montserrat">
+            <h2 className="text-white/20 text-[10px] tracking-[0.8em] uppercase font-montserrat">
               EVOLUTION IN PROGRESS
             </h2>
+            
+            {/* Smooth Progress Bar */}
             <div className="w-48 h-[1px] bg-white/10 relative overflow-hidden">
-               <div 
-                className="absolute inset-0 bg-blue-500 origin-left transition-transform duration-500"
-                style={{ transform: `scaleX(${bufferPct / 100})` }} 
-              />
+                <div 
+                  className="absolute inset-0 bg-blue-500 origin-left transition-transform duration-100"
+                  style={{ transform: `scaleX(${displayPct / 100})` }} 
+                />
             </div>
+            
             <p className="text-white/40 text-[8px] tracking-[0.2em] font-montserrat tabular-nums">
-                {bufferPct}%
+                {displayPct}%
             </p>
           </div>
         </div>
