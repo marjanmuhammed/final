@@ -114,202 +114,167 @@ export default function ChatBot() {
 
     // AI Logic
     setTimeout(() => {
-      let response;
       const q = userQuery.toLowerCase();
+      let response;
 
       if (q.includes("about") || q.includes("who")) {
-        response = { role: "bot", ...CHAT_DATA.about, type: "text" };
+        response = { ...CHAT_DATA.about, type: "text" };
       } else if (q.includes("skill") || q.includes("tech")) {
-        response = { role: "bot", ...CHAT_DATA.skills, type: "text" };
+        response = { ...CHAT_DATA.skills, type: "text" };
       } else if (q.includes("project") || q.includes("work")) {
-        response = { role: "bot", ...CHAT_DATA.projects, type: "projects" };
-      } else if (q.includes("contact") || q.includes("call") || q.includes("email")) {
-        response = { role: "bot", ...CHAT_DATA.contact, type: "text" };
+        response = { ...CHAT_DATA.projects, type: "projects" };
+      } else if (q.includes("contact") || q.includes("call") || q.includes("social")) {
+        response = { ...CHAT_DATA.contact, type: "contact" };
       } else if (q.includes("resume") || q.includes("cv")) {
-        response = { role: "bot", ...CHAT_DATA.resume, type: "resume" };
+        response = { ...CHAT_DATA.resume, type: "resume" };
       } else {
-        response = { role: "bot", text: "I can't reply for this general question, ask me about me.", suggestions: CHAT_DATA.default.suggestions, type: "text" };
+        response = { ...CHAT_DATA.default, type: "text" };
       }
 
-      setMessages((prev) => [...prev, response]);
+      setMessages(prev => [...prev, { 
+        id: Date.now() + 1, 
+        ...response,
+        role: "bot" 
+      }]);
       setIsTyping(false);
     }, 1000);
   };
 
+
   return (
     <>
-      {/* Floating Toggle Button */}
       <motion.button
-        whileHover={{ scale: 1.1, rotate: 5 }}
+        whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-[2000] p-4 bg-blue-600 text-white rounded-full shadow-2xl shadow-blue-500/30 flex items-center justify-center border border-white/20 will-change-transform"
+        onClick={() => setIsOpen(true)}
+        className={`fixed bottom-6 right-6 w-14 h-14 rounded-full bg-blue-600 text-white shadow-lg flex items-center justify-center z-[1000] ${isOpen ? 'hidden' : 'flex'}`}
       >
-        {isOpen ? <X size={24} /> : <MessageSquare size={24} />}
+        <MessageSquare size={24} />
       </motion.button>
 
-      {/* Chat Window */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.9, x: 20 }}
-            animate={{ opacity: 1, y: 0, scale: 1, x: 0 }}
-            exit={{ opacity: 0, y: 50, scale: 0.9, x: 20 }}
-            className="fixed bottom-24 right-6 w-[90vw] md:w-[400px] h-[550px] bg-[#0a0a0a] border border-white/10 rounded-3xl z-[2000] flex flex-col shadow-2xl overflow-hidden font-montserrat will-change-transform"
+            initial={{ opacity: 0, y: 100, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 100, scale: 0.8 }}
+            className="fixed bottom-6 right-6 w-[90vw] md:w-[400px] h-[600px] max-h-[80vh] bg-[#0a0a0a] border border-white/10 rounded-3xl shadow-2xl z-[1001] flex flex-col overflow-hidden"
           >
-            {/* Header */}
-            <div className="p-5 bg-gradient-to-r from-blue-600/20 to-purple-600/20 border-b border-white/5 flex items-center justify-between">
+            <div className="p-5 border-b border-white/5 bg-white/5 backdrop-blur-md flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                  <Bot size={20} className="text-white" />
+                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
+                  <Bot size={24} className="text-white" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-white tracking-tight">AI Portfolio Assistant</h3>
+                  <h3 className="font-bold text-sm text-white">AI Assistant</h3>
                   <div className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                    <span className="text-[10px] text-emerald-500 uppercase font-bold tracking-widest">Online</span>
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                    <span className="text-[10px] text-gray-400">Online</span>
                   </div>
                 </div>
               </div>
-              <button onClick={() => setIsOpen(false)} className="text-white/30 hover:text-white transition-colors">
+              <button 
+                onClick={() => setIsOpen(false)}
+                className="p-2 hover:bg-white/5 rounded-xl transition-colors text-gray-400"
+              >
                 <X size={20} />
               </button>
             </div>
 
-
-            {/* Top Quick Actions */}
-            <div className="bg-white/5 border-b border-white/5 px-4 py-3 overflow-x-auto scrollbar-hide flex gap-2 whitespace-nowrap">
-              {["About Me", "Skills", "Projects", "Contact", "Resume"].map((sug, i) => (
+            <div className="px-4 py-3 bg-white/5 border-b border-white/5 flex gap-2 overflow-x-auto no-scrollbar">
+              {["About", "Skills", "Projects", "Contact", "Resume"].map((item) => (
                 <button
-                  key={i}
-                  onClick={() => handleSend(sug)}
-                  className="px-3 py-1.5 bg-white/5 hover:bg-blue-600/20 border border-white/10 rounded-full text-[10px] text-white/70 hover:text-white transition-all active:scale-95"
+                  key={item}
+                  onClick={() => handleSend(item)}
+                  className="px-4 py-1.5 rounded-full bg-blue-600/10 border border-blue-500/30 text-blue-400 text-[10px] font-bold whitespace-nowrap hover:bg-blue-600 hover:text-white transition-all shadow-sm"
                 >
-                  {sug}
+                  {item}
                 </button>
               ))}
             </div>
 
-            {/* Messages Area */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 space-y-6 scrollbar-hide custom-scrollbar">
-              {messages.map((msg, idx) => (
-                <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} items-start gap-3`}>
-                  {msg.role === "bot" && (
-                    <div className="w-8 h-8 rounded-lg bg-blue-600/10 flex items-center justify-center flex-shrink-0 border border-blue-500/20">
-                      <Sparkles size={14} className="text-blue-400" />
-                    </div>
-                  )}
-                  <div className={`max-w-[85%] ${msg.role === "user" ? "bg-blue-600 text-white rounded-2xl rounded-tr-none" : "bg-white/5 text-white/90 rounded-2xl rounded-tl-none border border-white/5"} p-4 shadow-xl`}>
-                    {msg.role === "bot" ? (
-                      <TypingMessage text={msg.text} />
-                    ) : (
-                      <p className="text-sm">{msg.content}</p>
-                    )}
-
-                    {/* Project Items (if applicable) */}
-                    {msg.type === "projects" && msg.items && (
-                      <div className="mt-4 space-y-3">
-                        {msg.items.map((item, i) => (
-                          <motion.div
-                            key={i}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: i * 0.5 }}
-                            className="bg-black/40 rounded-xl overflow-hidden border border-white/5"
-                          >
-                            <img src={item.image} alt={item.title} className="w-full h-24 object-cover opacity-80" />
-                            <div className="p-3">
-                              <h4 className="text-xs font-bold text-white">{item.title}</h4>
-                              <p className="text-[10px] text-white/50 mt-1">{item.description}</p>
-                            </div>
-                          </motion.div>
-                        ))}
+            <div className="flex-1 overflow-y-auto p-5 space-y-4 no-scrollbar bg-gradient-to-b from-transparent to-black/20">
+              {messages.map((msg) => (
+                <motion.div
+                  key={msg.id}
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
+                >
+                  <div
+                    className={`max-w-[85%] px-4 py-2.5 rounded-2xl shadow-sm ${
+                      msg.sender === "user"
+                        ? "bg-blue-600 text-white rounded-tr-none"
+                        : "bg-white/10 backdrop-blur-md border border-white/10 text-gray-200 rounded-tl-none"
+                    }`}
+                  >
+                    {msg.type === "text" && <p className="text-sm leading-relaxed">{msg.response || msg.text}</p>}
+                    
+                    {msg.type === "socials" && (
+                      <div className="space-y-3">
+                        <p className="text-sm font-medium border-b border-white/10 pb-2 mb-2">Connect with me</p>
+                        <div className="grid grid-cols-1 gap-2">
+                          {msg.links.map((link, idx) => (
+                            <a
+                              key={idx}
+                              href={link.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-3 p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors group"
+                            >
+                              <div className="p-1.5 rounded-md bg-white/5 group-hover:scale-110 transition-transform">
+                                {link.icon}
+                              </div>
+                              <span className="text-xs font-medium">{link.label}</span>
+                              <ExternalLink size={10} className="ml-auto opacity-40" />
+                            </a>
+                          ))}
+                        </div>
                       </div>
                     )}
 
-                    {/* Social Links (if contact type) */}
-                    {(msg.type === "contact" || msg.socials) && (
-                      <div className="mt-4 flex gap-3">
-                        {msg.socials.map((social, i) => (
-                          <a
-                            key={i}
-                            href={social.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-10 h-10 bg-white/5 hover:bg-blue-600/20 border border-white/10 rounded-xl flex items-center justify-center text-white/70 hover:text-white transition-all shadow-lg active:scale-90"
-                            title={social.name}
-                          >
-                            {social.icon}
-                          </a>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Resume Card (if resume type) */}
                     {msg.type === "resume" && (
-                      <div className="mt-4 bg-black/40 rounded-xl border border-white/10 p-4 space-y-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center border border-red-500/20">
-                            <FileText size={24} className="text-red-500" />
+                      <div className="space-y-4">
+                        <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center gap-4">
+                          <div className="p-3 bg-blue-500/20 rounded-lg">
+                            <FileText className="text-blue-400" size={24} />
                           </div>
                           <div>
-                            <h4 className="text-xs font-bold text-white">Marjan_Resume.pdf</h4>
-                            <p className="text-[10px] text-white/40">Latest Version • PDF</p>
+                            <p className="text-sm font-bold">Resume.pdf</p>
+                            <p className="text-[10px] text-gray-400">PDF Document</p>
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <a
-                            href={msg.fileUrl}
+                        
+                        <div className="flex flex-col gap-2">
+                          <a 
+                            href="/images/resume.pdf"
                             target="_blank"
-                            className="flex items-center justify-center gap-2 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[10px] text-white transition-all"
+                            className="flex items-center justify-center gap-2 w-full py-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-lg text-xs font-bold transition-all"
                           >
-                            <Eye size={14} /> View
-                          </a>
-                          <a
-                            href={msg.fileUrl}
-                            download
-                            className="flex items-center justify-center gap-2 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-[10px] text-white transition-all"
-                          >
-                            <Download size={14} /> Download
+                            <Eye size={14} /> View Online
                           </a>
                         </div>
-                      </div>
-                    )}
-
-                    {/* Suggestions Chips */}
-                    {msg.role === "bot" && msg.suggestions && (
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {msg.suggestions.map((sug, i) => (
-                          <button
-                            key={i}
-                            onClick={() => handleSend(sug)}
-                            className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-[10px] text-blue-400 transition-all active:scale-95"
-                          >
-                            {sug}
-                          </button>
-                        ))}
                       </div>
                     )}
                   </div>
-                </div>
+                </motion.div>
               ))}
+              
               {isTyping && (
                 <div className="flex justify-start items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-blue-600/10 flex items-center justify-center border border-blue-500/20">
                     <Sparkles size={14} className="text-blue-400" />
                   </div>
                   <div className="bg-white/5 p-4 rounded-2xl rounded-tl-none border border-white/5">
-                    <div className="flex flex-col gap-2">
-                      <span className="text-[10px] text-white/30 uppercase font-bold tracking-widest animate-pulse">Typing...</span>
-                      <div className="flex gap-1">
-                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" />
-                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-delay:0.2s]" />
-                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-delay:0.4s]" />
-                      </div>
+                    <div className="flex gap-1">
+                      <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" />
+                      <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-delay:0.2s]" />
+                      <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-delay:0.4s]" />
                     </div>
                   </div>
                 </div>
               )}
+
             </div>
 
             {/* Input Area */}

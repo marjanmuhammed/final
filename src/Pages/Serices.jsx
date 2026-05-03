@@ -61,9 +61,6 @@ const AnimatedBox = ({ delay, src, name, isLowEnd }) => {
     maskComposite: "exclude",
     animation: `rotateLight ${isLowEnd ? '10s' : '6s'} linear infinite`,
     border: 'none',
-
-
-
     animationDelay: delay,
     zIndex: 2,
     pointerEvents: "none",
