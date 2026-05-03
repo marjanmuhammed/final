@@ -1,126 +1,283 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 
 /**
- * CinematicBackground — Final Maximum Smoothness Edition
- *
- * This version uses a professional loader that preloads the video fully
- * before revealing the site. It skip-starts the video at 0.5s to avoid
- * black frames and handles visibility to save resources on low-end devices.
+ * CinematicBackground — Final Adaptive Hybrid Edition
+ * 
+ * Optimized for:
+ * 1. HIGH-END (Desktop/iPhone): Ultra-smooth scroll-synced video.
+ * 2. LOW-END ANDROID: Video is disabled. Uses 60 WebP frames on Canvas for zero lag.
  */
 
-const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 const VIDEO_START_OFFSET = 0.5;
+const LOW_END_FRAME_COUNT = 60; // 60 frames for maximum memory safety on 2GB devices
+const LOW_END_DIR = "/frames/mobile";
+
+// Utility to pad frame numbers (e.g., 0 -> "001")
+const pad = (n) => String(n + 1).padStart(3, "0");
 
 export default function CinematicBackground({ containerRef }) {
-  const videoRef = useRef(null);
-  const wrapperRef = useRef(null);
-  
+  const [tier, setTier] = useState(null); // 'HIGH' (Video) vs 'LOW' (Canvas)
+  const [engine, setEngine] = useState(null); // 'video' | 'canvas'
   const [isReady, setIsReady] = useState(false);
-  const [bufferPct, setBufferPct] = useState(0);
   const [loaderVisible, setLoaderVisible] = useState(true);
 
-  const targetTime = useRef(VIDEO_START_OFFSET);
-  const currentTime = useRef(VIDEO_START_OFFSET);
-  const videoDur = useRef(0);
-  const rafId = useRef(null);
+  // Shared state tracking
+  const targetProgress = useRef(0);
+  const currentProgress = useRef(0);
 
-  // ── Progress & Visibility ───────────────────────────────────────────────────
-  const getProgress = () => {
+  // ── 1. Device Performance Detection ──────────────────────────────────────────
+  useEffect(() => {
+    const cores = navigator.hardwareConcurrency || 4;
+    const ram = navigator.deviceMemory || 4;
+    const ua = navigator.userAgent;
+    const isAndroid = /Android/i.test(ua);
+    const isIPhone = /iPhone|iPad|iPod/i.test(ua);
+
+    // CRITICAL: Low-end Android detection
+    const isLowEndAndroid = isAndroid && (ram <= 3 || cores <= 4);
+
+    if (isLowEndAndroid) {
+      setTier('LOW');
+      setEngine('canvas');
+    } else {
+      setTier('HIGH');
+      setEngine('video');
+    }
+  }, []);
+
+  // ── 2. Shared Scroll Progress Logic ──────────────────────────────────────────
+  const getScrollProgress = useCallback(() => {
     const el = containerRef?.current;
     if (!el) return 0;
     const scrolled = window.scrollY - el.offsetTop;
     const scrollable = el.offsetHeight - window.innerHeight;
     if (scrollable <= 0) return 0;
     return Math.min(Math.max(scrolled / scrollable, 0), 1);
-  };
+  }, [containerRef]);
 
-  const getVideoTime = (p) => {
-    const d = videoDur.current;
-    if (!d) return VIDEO_START_OFFSET;
-    if (p >= 0.99) return d;
-    return VIDEO_START_OFFSET + p * (d - VIDEO_START_OFFSET);
-  };
-
-  const updateVisibility = () => {
-    const el = containerRef?.current;
-    const wrapper = wrapperRef.current;
-    if (!el || !wrapper) return;
-
-    const containerBottom = el.offsetTop + el.offsetHeight;
-    const scrollY = window.scrollY;
-    const fadeStart = containerBottom - window.innerHeight * 0.5;
-    const fadeEnd = containerBottom + window.innerHeight * 0.3;
-
-    if (scrollY < fadeStart) {
-      wrapper.style.opacity = "1";
-      wrapper.style.visibility = "visible";
-    } else if (scrollY > fadeEnd) {
-      wrapper.style.opacity = "0";
-      wrapper.style.visibility = "hidden";
-    } else {
-      const t = (scrollY - fadeStart) / (fadeEnd - fadeStart);
-      wrapper.style.opacity = String(1 - t);
-      wrapper.style.visibility = "visible";
-    }
-  };
-
-  // ── Scroll Listener ───────────────────────────────────────────────────────────
   useEffect(() => {
-    let ticking = false;
     const onScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          targetTime.current = getVideoTime(getProgress());
-          updateVisibility();
-          ticking = false;
-        });
-        ticking = true;
-      }
+      targetProgress.current = getScrollProgress();
     };
     window.addEventListener("scroll", onScroll, { passive: true });
-    targetTime.current = getVideoTime(getProgress());
-    updateVisibility();
+    targetProgress.current = getScrollProgress();
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [getScrollProgress]);
 
-  // ── Smooth RAF Render Loop ────────────────────────────────────────────────────
+  // ── 3. Loader Controller ─────────────────────────────────────────────────────
+  useEffect(() => {
+    if (isReady) {
+      const t = setTimeout(() => setLoaderVisible(false), 800);
+      return () => clearTimeout(t);
+    }
+  }, [isReady]);
+
+  return (
+    <>
+      {/* ── Branded Loader ── */}
+      {loaderVisible && (
+        <div 
+          className="fixed inset-0 bg-black flex flex-col items-center justify-center z-[99999] transition-opacity duration-700"
+          style={{ opacity: isReady ? 0 : 1, pointerEvents: isReady ? 'none' : 'all' }}
+        >
+          <div className="flex flex-col items-center gap-6">
+            <h2 className="text-white/20 text-[10px] tracking-[0.8em] uppercase animate-pulse font-montserrat">
+              EVOLUTION IN PROGRESS
+            </h2>
+            <div className="w-48 h-[1px] bg-white/10 relative overflow-hidden">
+               <div 
+                className="absolute inset-0 bg-blue-500 origin-left transition-transform duration-500"
+                style={{ transform: `scaleX(${isReady ? 1 : 0.4})` }} 
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Conditional Engines ── */}
+      {engine === 'video' && (
+        <VideoEngine 
+          containerRef={containerRef}
+          targetProgress={targetProgress}
+          currentProgress={currentProgress}
+          onReady={() => setIsReady(true)}
+          onFail={() => setEngine('canvas')} // Automatic fail-safe fallback
+        />
+      )}
+
+      {engine === 'canvas' && (
+        <CanvasEngine 
+          containerRef={containerRef}
+          targetProgress={targetProgress}
+          currentProgress={currentProgress}
+          onReady={() => setIsReady(true)}
+        />
+      )}
+    </>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// A) VIDEO ENGINE (High-End: Desktop & iPhone)
+// ──────────────────────────────────────────────────────────────────────────────
+function VideoEngine({ containerRef, targetProgress, currentProgress, onReady, onFail }) {
+  const videoRef = useRef(null);
+  const wrapperRef = useRef(null);
+  const videoDur = useRef(0);
+  const lastSeek = useRef(0);
+  const rafId = useRef(null);
+
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !isReady) return;
+    if (!video) return;
 
-    // Tuning for low-end vs desktop
-    const LERP = isMobile ? 0.08 : 0.15;
-    const SEEK_RATE = isMobile ? 40 : 33; // 25fps vs 30fps seeks
-    
-    let lastSeek = 0;
-    let running = true;
+    // Fail-safe: 2-second timeout for video metadata
+    const timeout = setTimeout(() => {
+      if (video.readyState < 1) {
+        console.warn("Video too slow, falling back to canvas.");
+        onFail();
+      }
+    }, 2000);
 
-    const loop = (timestamp) => {
-      if (!running) return;
+    const onMetadata = () => {
+      clearTimeout(timeout);
+      videoDur.current = video.duration;
+      video.currentTime = VIDEO_START_OFFSET;
+      onReady();
+    };
 
-      const d = videoDur.current;
-      if (d > 0 && video.readyState >= 2) {
-        const diff = targetTime.current - currentTime.current;
+    video.addEventListener("loadedmetadata", onMetadata);
+    video.load();
+    return () => {
+      video.removeEventListener("loadedmetadata", onMetadata);
+      clearTimeout(timeout);
+    };
+  }, [onReady, onFail]);
 
-        if (Math.abs(diff) > 0.001) {
-          if (Math.abs(diff) > 2) {
-            currentTime.current = targetTime.current;
-          } else {
-            currentTime.current += diff * LERP;
-          }
+  useEffect(() => {
+    const video = videoRef.current;
+    const wrapper = wrapperRef.current;
+    if (!video) return;
 
-          if (currentTime.current >= d - 0.08) {
-            currentTime.current = d;
-            targetTime.current = d;
-          }
+    const LERP = 0.15;
+    const SEEK_RATE = 33; // 30 FPS updates
 
-          if (timestamp - lastSeek >= SEEK_RATE) {
-            video.currentTime = Math.max(
-              VIDEO_START_OFFSET,
-              Math.min(d - 0.04, currentTime.current)
-            );
-            lastSeek = timestamp;
-          }
+    const loop = (time) => {
+      const diff = targetProgress.current - currentProgress.current;
+      currentProgress.current += diff * LERP;
+
+      // Visibility & Opacity Logic
+      const el = containerRef.current;
+      if (el && wrapper) {
+        const bottom = el.offsetTop + el.offsetHeight;
+        const s = window.scrollY;
+        if (s > bottom + 100) {
+          wrapper.style.visibility = 'hidden';
+        } else {
+          wrapper.style.visibility = 'visible';
+          const fadeStart = bottom - window.innerHeight * 0.5;
+          wrapper.style.opacity = s > fadeStart ? Math.max(0, 1 - (s - fadeStart) / 400) : 1;
+        }
+      }
+
+      // Perform Video Seek
+      if (time - lastSeek.current > SEEK_RATE && video.readyState >= 2) {
+        const d = videoDur.current;
+        const t = VIDEO_START_OFFSET + currentProgress.current * (d - VIDEO_START_OFFSET);
+        video.currentTime = Math.max(VIDEO_START_OFFSET, Math.min(d - 0.05, t));
+        lastSeek.current = time;
+      }
+
+      rafId.current = requestAnimationFrame(loop);
+    };
+
+    rafId.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafId.current);
+  }, [containerRef]);
+
+  return (
+    <div ref={wrapperRef} className="fixed inset-0 z-[-1] bg-black pointer-events-none transition-opacity duration-700">
+      <video
+        ref={videoRef}
+        src="/loading/benz1.mp4"
+        muted playsInline preload="metadata"
+        className="w-full h-full object-cover"
+        style={{ transform: "translateZ(0)", willChange: "transform" }}
+      />
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// B) CANVAS ENGINE (Low-End Android: Lightweight Image Sequence)
+// ──────────────────────────────────────────────────────────────────────────────
+function CanvasEngine({ containerRef, targetProgress, currentProgress, onReady }) {
+  const canvasRef = useRef(null);
+  const wrapperRef = useRef(null);
+  const frames = useRef([]);
+  const lastDrawnFrame = useRef(-1);
+  const rafId = useRef(null);
+
+  // 1. Preload first frame to trigger loader exit
+  useEffect(() => {
+    const img = new Image();
+    img.src = `${LOW_END_DIR}/frame_001.webp`;
+    img.onload = () => {
+      frames.current[0] = img;
+      onReady();
+      
+      // 2. Progressive background load of 60 frames (every 2nd frame from the 120 set)
+      const loadFrames = async () => {
+        for (let i = 1; i < LOW_END_FRAME_COUNT; i++) {
+          const frameNum = i * 2; // Use every 2nd frame to hit 60 count
+          const img = new Image();
+          img.src = `${LOW_END_DIR}/frame_${pad(frameNum)}.webp`;
+          img.onload = () => { frames.current[i] = img; };
+          if (i % 10 === 0) await new Promise(r => setTimeout(r, 60)); // Sleep to keep CPU free
+        }
+      };
+      loadFrames();
+    };
+  }, [onReady]);
+
+  // 2. Rendering Loop
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const wrapper = wrapperRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d", { alpha: false });
+    const LERP = 0.08; // Slower LERP on low-end for visual stability
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    const loop = () => {
+      const diff = targetProgress.current - currentProgress.current;
+      currentProgress.current += diff * LERP;
+
+      const idx = Math.round(currentProgress.current * (LOW_END_FRAME_COUNT - 1));
+      const img = frames.current[idx];
+
+      if (img && idx !== lastDrawnFrame.current) {
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        lastDrawnFrame.current = idx;
+      }
+
+      // visibility logic
+      const el = containerRef.current;
+      if (el && wrapper) {
+        const bottom = el.offsetTop + el.offsetHeight;
+        const s = window.scrollY;
+        if (s > bottom + 100) wrapper.style.visibility = 'hidden';
+        else {
+          wrapper.style.visibility = 'visible';
+          const fadeStart = bottom - window.innerHeight * 0.5;
+          wrapper.style.opacity = s > fadeStart ? Math.max(0, 1 - (s - fadeStart) / 400) : 1;
         }
       }
 
@@ -129,119 +286,14 @@ export default function CinematicBackground({ containerRef }) {
 
     rafId.current = requestAnimationFrame(loop);
     return () => {
-      running = false;
-      if (rafId.current) cancelAnimationFrame(rafId.current);
+      cancelAnimationFrame(rafId.current);
+      window.removeEventListener("resize", resize);
     };
-  }, [isReady]);
-
-  // ── Video Preloading Logic ────────────────────────────────────────────────────
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const onProgress = () => {
-      if (video.buffered.length > 0 && video.duration) {
-        const end = video.buffered.end(video.buffered.length - 1);
-        const pct = Math.round((end / video.duration) * 100);
-        setBufferPct(pct);
-        
-        // If buffered enough, or fully buffered
-        if (pct >= 95 || (end >= video.duration - 0.5)) {
-           setIsReady(true);
-           setTimeout(() => setLoaderVisible(false), 500);
-        }
-      }
-    };
-
-    const onMetadata = () => {
-      const d = video.duration;
-      if (d && !isNaN(d)) {
-        videoDur.current = d;
-        video.currentTime = VIDEO_START_OFFSET;
-        currentTime.current = VIDEO_START_OFFSET;
-        targetTime.current = VIDEO_START_OFFSET;
-      }
-    };
-
-    const onCanPlayThrough = () => {
-      setIsReady(true);
-      setBufferPct(100);
-      setTimeout(() => setLoaderVisible(false), 500);
-    };
-
-    video.addEventListener("loadedmetadata", onMetadata);
-    video.addEventListener("progress", onProgress);
-    video.addEventListener("canplaythrough", onCanPlayThrough);
-
-    if (video.readyState >= 4) {
-      onCanPlayThrough();
-    } else {
-      video.load();
-    }
-
-    return () => {
-      video.removeEventListener("loadedmetadata", onMetadata);
-      video.removeEventListener("progress", onProgress);
-      video.removeEventListener("canplaythrough", onCanPlayThrough);
-    };
-  }, []);
+  }, [containerRef]);
 
   return (
-    <>
-      {/* ── Branded Preloader ── */}
-      {loaderVisible && (
-        <div
-          className="fixed inset-0 bg-black flex flex-col items-center justify-center z-[99999]"
-          style={{ 
-            opacity: isReady ? 0 : 1,
-            transition: "opacity 0.6s ease-in-out",
-            pointerEvents: isReady ? "none" : "all"
-          }}
-        >
-          <div className="flex flex-col items-center gap-6">
-             <h2 className="text-white/20 text-[10px] tracking-[0.8em] uppercase animate-pulse font-montserrat">
-                EVOLUTION IN PROGRESS
-             </h2>
-             
-             {/* Progress Bar Container */}
-             <div className="w-48 h-[1px] bg-white/10 relative overflow-hidden">
-                <div 
-                  className="absolute inset-0 bg-blue-500 origin-left transition-transform duration-300"
-                  style={{ transform: `scaleX(${bufferPct / 100})` }}
-                />
-             </div>
-             
-             <p className="text-white/40 text-[8px] tracking-[0.2em] font-montserrat tabular-nums">
-                {bufferPct}%
-             </p>
-          </div>
-        </div>
-      )}
-
-      {/* ── Video Layer ── */}
-      <div
-        ref={wrapperRef}
-        className="fixed inset-0 w-full h-screen pointer-events-none overflow-hidden bg-black"
-        style={{
-          zIndex: -1,
-          opacity: 0, // Starts invisible, revealed by updateVisibility/load
-          transition: "opacity 0.8s ease-in-out"
-        }}
-      >
-        <video
-          ref={videoRef}
-          src="/loading/benz1.mp4"
-          muted
-          playsInline
-          preload="auto"
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{
-            transform: "translateZ(0)",
-            willChange: "transform",
-            imageRendering: "high-quality",
-          }}
-        />
-      </div>
-    </>
+    <div ref={wrapperRef} className="fixed inset-0 z-[-1] bg-black pointer-events-none transition-opacity duration-700">
+      <canvas ref={canvasRef} className="w-full h-full object-cover" />
+    </div>
   );
 }
