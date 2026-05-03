@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { AlertTriangle, Zap } from "lucide-react";
+
+
 import { usePerformance } from "../context/PerformanceContext";
 
 export default function PerformanceGuard({ children }) {
@@ -31,25 +33,23 @@ export default function PerformanceGuard({ children }) {
     
     console.log("Device Specs:", { memory, cores, isMobile, forceLow, isLowEndDevice });
 
-
-    const savedChoice = localStorage.getItem("performance_choice");
-
-    if (isLowEndDevice && !savedChoice) {
+    // We no longer check savedChoice for showing the modal if it's a low-end device.
+    // This ensures it shows on every refresh as requested.
+    if (isLowEndDevice) {
       setShowModal(true);
     } else {
-      const mode = (isLowEndDevice && savedChoice === "low") || forceLow;
-      setIsLowEnd(mode);
+      setIsLowEnd(false);
       setHasChoice(true);
     }
   }, [setIsLowEnd]);
 
 
   const handleContinue = () => {
-    localStorage.setItem("performance_choice", "low");
     setIsLowEnd(true);
     setShowModal(false);
     setHasChoice(true);
   };
+
 
   const handleExit = () => {
     window.location.href = "https://www.google.com";
@@ -72,9 +72,10 @@ export default function PerformanceGuard({ children }) {
             </h2>
             
             <p className="text-white/60 text-sm leading-relaxed mb-8">
-              ⚠️ Your device may not support the full experience. <br/>
-              For best performance, use a high-end device.
+              ⚠️ Your device may not support the full 3d scrollbased experience. <br/>
+              For best performance, use a high-end device or pc.
             </p>
+
 
             <div className="grid grid-cols-1 gap-4 w-full">
               <button
@@ -97,6 +98,8 @@ export default function PerformanceGuard({ children }) {
               Low-End Mode will be enabled
             </p>
           </div>
+
+
         </div>
       </div>
     );
