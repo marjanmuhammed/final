@@ -1,0 +1,11 @@
+{
+  "desktop": {
+    "count": 240,
+    "width": 1280
+  },
+  "mobile": {
+    "count": 120,
+    "width": 640
+  },
+  "generated": "2026-05-03T10:46:33.659Z"
+}

@@ -1,30 +1,30 @@
 import React, { useRef, useEffect, useState } from "react";
 
 /**
- * CinematicBackground — Final Polished Edition
+ * CinematicBackground — Final Maximum Smoothness Edition
  *
- * Fixes:
- * 1. Black first frame → video starts at 0.5s offset (skips black intro frames)
- * 2. Video hidden on Contact page → fades out when user scrolls past About section
+ * This version uses a professional loader that preloads the video fully
+ * before revealing the site. It skip-starts the video at 0.5s to avoid
+ * black frames and handles visibility to save resources on low-end devices.
  */
 
 const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-
-// Skip the first N seconds to avoid black intro frames in the video
 const VIDEO_START_OFFSET = 0.5;
 
 export default function CinematicBackground({ containerRef }) {
   const videoRef = useRef(null);
   const wrapperRef = useRef(null);
+  
   const [isReady, setIsReady] = useState(false);
+  const [bufferPct, setBufferPct] = useState(0);
+  const [loaderVisible, setLoaderVisible] = useState(true);
 
   const targetTime = useRef(VIDEO_START_OFFSET);
   const currentTime = useRef(VIDEO_START_OFFSET);
   const videoDur = useRef(0);
   const rafId = useRef(null);
 
-  // ── Progress → Video Time ─────────────────────────────────────────────────────
-  // Maps scroll 0→1 to video offset→duration (skips black first frames)
+  // ── Progress & Visibility ───────────────────────────────────────────────────
   const getProgress = () => {
     const el = containerRef?.current;
     if (!el) return 0;
@@ -37,13 +37,10 @@ export default function CinematicBackground({ containerRef }) {
   const getVideoTime = (p) => {
     const d = videoDur.current;
     if (!d) return VIDEO_START_OFFSET;
-    // Map scroll 0→1 to video offset→duration
     if (p >= 0.99) return d;
     return VIDEO_START_OFFSET + p * (d - VIDEO_START_OFFSET);
   };
 
-  // ── Video Visibility (hide on Contact/Services) ───────────────────────────────
-  // Fades out smoothly when user scrolls past the cinematic container
   const updateVisibility = () => {
     const el = containerRef?.current;
     const wrapper = wrapperRef.current;
@@ -56,15 +53,18 @@ export default function CinematicBackground({ containerRef }) {
 
     if (scrollY < fadeStart) {
       wrapper.style.opacity = "1";
+      wrapper.style.visibility = "visible";
     } else if (scrollY > fadeEnd) {
       wrapper.style.opacity = "0";
+      wrapper.style.visibility = "hidden";
     } else {
       const t = (scrollY - fadeStart) / (fadeEnd - fadeStart);
       wrapper.style.opacity = String(1 - t);
+      wrapper.style.visibility = "visible";
     }
   };
 
-  // ── Scroll Listener (RAF-throttled) ──────────────────────────────────────────
+  // ── Scroll Listener ───────────────────────────────────────────────────────────
   useEffect(() => {
     let ticking = false;
     const onScroll = () => {
@@ -88,8 +88,10 @@ export default function CinematicBackground({ containerRef }) {
     const video = videoRef.current;
     if (!video || !isReady) return;
 
-    const LERP = isMobile ? 0.12 : 0.18;
-    const SEEK_RATE = isMobile ? 40 : 33;
+    // Tuning for low-end vs desktop
+    const LERP = isMobile ? 0.08 : 0.15;
+    const SEEK_RATE = isMobile ? 40 : 33; // 25fps vs 30fps seeks
+    
     let lastSeek = 0;
     let running = true;
 
@@ -132,72 +134,98 @@ export default function CinematicBackground({ containerRef }) {
     };
   }, [isReady]);
 
-  // ── Video Setup ───────────────────────────────────────────────────────────────
+  // ── Video Preloading Logic ────────────────────────────────────────────────────
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
+
+    const onProgress = () => {
+      if (video.buffered.length > 0 && video.duration) {
+        const end = video.buffered.end(video.buffered.length - 1);
+        const pct = Math.round((end / video.duration) * 100);
+        setBufferPct(pct);
+        
+        // If buffered enough, or fully buffered
+        if (pct >= 95 || (end >= video.duration - 0.5)) {
+           setIsReady(true);
+           setTimeout(() => setLoaderVisible(false), 500);
+        }
+      }
+    };
 
     const onMetadata = () => {
       const d = video.duration;
       if (d && !isNaN(d)) {
         videoDur.current = d;
-        // Start at offset to skip black intro frames
         video.currentTime = VIDEO_START_OFFSET;
         currentTime.current = VIDEO_START_OFFSET;
         targetTime.current = VIDEO_START_OFFSET;
       }
     };
 
-    const onCanPlay = async () => {
-      const d = video.duration;
-      if (d && !isNaN(d)) videoDur.current = d;
-      try {
-        await video.play();
-        video.pause();
-        video.currentTime = VIDEO_START_OFFSET;
-        currentTime.current = VIDEO_START_OFFSET;
-      } catch (_) {}
+    const onCanPlayThrough = () => {
       setIsReady(true);
+      setBufferPct(100);
+      setTimeout(() => setLoaderVisible(false), 500);
     };
 
     video.addEventListener("loadedmetadata", onMetadata);
-    video.addEventListener("canplaythrough", onCanPlay, { once: true });
+    video.addEventListener("progress", onProgress);
+    video.addEventListener("canplaythrough", onCanPlayThrough);
 
-    if (video.readyState >= 2) {
-      onMetadata();
-      setIsReady(true);
+    if (video.readyState >= 4) {
+      onCanPlayThrough();
     } else {
       video.load();
     }
 
     return () => {
       video.removeEventListener("loadedmetadata", onMetadata);
-      video.removeEventListener("canplaythrough", onCanPlay);
+      video.removeEventListener("progress", onProgress);
+      video.removeEventListener("canplaythrough", onCanPlayThrough);
     };
   }, []);
 
   return (
     <>
-      {/* Auto-fading black overlay — hides first 0.4s while video decodes */}
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          backgroundColor: "black",
-          zIndex: 9998,
-          pointerEvents: "none",
-          animation: "fadeOutBlack 0.4s ease 0.1s forwards",
-        }}
-      />
+      {/* ── Branded Preloader ── */}
+      {loaderVisible && (
+        <div
+          className="fixed inset-0 bg-black flex flex-col items-center justify-center z-[99999]"
+          style={{ 
+            opacity: isReady ? 0 : 1,
+            transition: "opacity 0.6s ease-in-out",
+            pointerEvents: isReady ? "none" : "all"
+          }}
+        >
+          <div className="flex flex-col items-center gap-6">
+             <h2 className="text-white/20 text-[10px] tracking-[0.8em] uppercase animate-pulse font-montserrat">
+                EVOLUTION IN PROGRESS
+             </h2>
+             
+             {/* Progress Bar Container */}
+             <div className="w-48 h-[1px] bg-white/10 relative overflow-hidden">
+                <div 
+                  className="absolute inset-0 bg-blue-500 origin-left transition-transform duration-300"
+                  style={{ transform: `scaleX(${bufferPct / 100})` }}
+                />
+             </div>
+             
+             <p className="text-white/40 text-[8px] tracking-[0.2em] font-montserrat tabular-nums">
+                {bufferPct}%
+             </p>
+          </div>
+        </div>
+      )}
 
-      {/* Video wrapper — fades out when user scrolls past About section */}
+      {/* ── Video Layer ── */}
       <div
         ref={wrapperRef}
-        className="fixed inset-0 w-full h-screen pointer-events-none overflow-hidden"
+        className="fixed inset-0 w-full h-screen pointer-events-none overflow-hidden bg-black"
         style={{
           zIndex: -1,
-          opacity: 1,
-          transition: "opacity 0.4s ease",
+          opacity: 0, // Starts invisible, revealed by updateVisibility/load
+          transition: "opacity 0.8s ease-in-out"
         }}
       >
         <video
@@ -210,11 +238,7 @@ export default function CinematicBackground({ containerRef }) {
           style={{
             transform: "translateZ(0)",
             willChange: "transform",
-            backfaceVisibility: "hidden",
-            WebkitBackfaceVisibility: "hidden",
             imageRendering: "high-quality",
-            filter: "none",
-            opacity: 1,
           }}
         />
       </div>

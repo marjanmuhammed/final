@@ -12,8 +12,6 @@ import Hummingbird from "./components/Hummingbird";
 import CinematicBackground from "./components/CinematicBackground";
 
 import "./App.css";
-import Particles from "react-tsparticles";
-import { loadFull } from "tsparticles";
 
 // Always start at the top on refresh — ensures video plays from frame 0
 if (typeof window !== "undefined") {
@@ -28,61 +26,10 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
 
-  const particlesInit = async (main) => {
-    await loadFull(main);
-  };
-
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-
-  const particlesOptions = {
-    background: { color: { value: "#000000" } },
-    fpsLimit: isMobile ? 30 : 60, // Limit FPS on mobile
-    interactivity: {
-      detectsOn: "window",
-      events: {
-        onClick: { enable: !isMobile, mode: "push" }, // Disable click on mobile
-        onHover: { enable: !isMobile, mode: "repulse" }, // Disable hover on mobile
-        resize: true,
-      },
-      modes: {
-        repulse: {
-          distance: 100,
-          duration: 0.4,
-        },
-        push: {
-          quantity: 4,
-        },
-      },
-    },
-    particles: {
-      color: { value: "#ffffff" },
-      links: {
-        color: "#ffffff",
-        distance: 100,
-        enable: !isMobile, // DISABLE links on mobile - big performance win
-        opacity: 0.2,
-        width: 1,
-      },
-      move: {
-        direction: "none",
-        enable: true,
-        outModes: "out",
-        speed: isMobile ? 0.3 : 0.5, // Slower movement on mobile
-      },
-      number: {
-        value: isMobile ? 20 : 60, // Significantly fewer particles for better performance
-        density: { enable: true, area: 1000 },
-      },
-      opacity: { value: 0.6 },
-      shape: { type: "circle" },
-      size: { value: { min: 1, max: 3 } },
-    },
-    detectRetina: false, // Disable retina for particles on mobile
-  };
 
   return (
     <>
-      {!isMobile && <Particles id="tsparticles" init={particlesInit} options={particlesOptions} />}
       <CinematicBackground containerRef={cinematicContainerRef} />
       <Hummingbird />
       <Navbar />
