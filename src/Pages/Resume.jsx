@@ -20,6 +20,8 @@ export default function Resume() {
           Resume
         </h2>
 
+
+
         {/* Resume Layout */}
         <div className="grid md:grid-cols-2 gap-12">
           {/* Left Column */}

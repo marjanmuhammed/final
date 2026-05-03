@@ -116,7 +116,7 @@ export default function ChatBot() {
     setTimeout(() => {
       let response;
       const q = userQuery.toLowerCase();
-      
+
       if (q.includes("about") || q.includes("who")) {
         response = { role: "bot", ...CHAT_DATA.about, type: "text" };
       } else if (q.includes("skill") || q.includes("tech")) {
@@ -210,7 +210,7 @@ export default function ChatBot() {
                     {msg.type === "projects" && msg.items && (
                       <div className="mt-4 space-y-3">
                         {msg.items.map((item, i) => (
-                          <motion.div 
+                          <motion.div
                             key={i}
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
@@ -231,7 +231,7 @@ export default function ChatBot() {
                     {(msg.type === "contact" || msg.socials) && (
                       <div className="mt-4 flex gap-3">
                         {msg.socials.map((social, i) => (
-                          <a 
+                          <a
                             key={i}
                             href={social.url}
                             target="_blank"
@@ -258,24 +258,20 @@ export default function ChatBot() {
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
-                          <a 
-                            href={msg.fileUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
+                          <a
+                            href={msg.fileUrl}
+                            target="_blank"
                             className="flex items-center justify-center gap-2 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[10px] text-white transition-all"
                           >
                             <Eye size={14} /> View
                           </a>
-                          <a 
-                            href={msg.fileUrl} 
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            download="Marjan_Resume.pdf"
+                          <a
+                            href={msg.fileUrl}
+                            download
                             className="flex items-center justify-center gap-2 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-[10px] text-white transition-all"
                           >
                             <Download size={14} /> Download
                           </a>
-
                         </div>
                       </div>
                     )}
