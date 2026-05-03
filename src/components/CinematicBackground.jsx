@@ -1,26 +1,30 @@
 import React, { useRef, useEffect, useState } from "react";
 
 /**
- * CinematicBackground — Smooth & Fast Edition
+ * CinematicBackground — Final Polished Edition
  *
  * Fixes:
- * 1. No black screen on first view — video fades in within 0.3s of first frame
- * 2. No stuck animation — seek throttled to 30fps (video decoder sweet spot)
- *    LERP handles visual smoothness between seeks
+ * 1. Black first frame → video starts at 0.5s offset (skips black intro frames)
+ * 2. Video hidden on Contact page → fades out when user scrolls past About section
  */
 
 const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
+// Skip the first N seconds to avoid black intro frames in the video
+const VIDEO_START_OFFSET = 0.5;
+
 export default function CinematicBackground({ containerRef }) {
   const videoRef = useRef(null);
+  const wrapperRef = useRef(null);
   const [isReady, setIsReady] = useState(false);
 
-  const targetTime = useRef(0);
-  const currentTime = useRef(0);
+  const targetTime = useRef(VIDEO_START_OFFSET);
+  const currentTime = useRef(VIDEO_START_OFFSET);
   const videoDur = useRef(0);
   const rafId = useRef(null);
 
   // ── Progress → Video Time ─────────────────────────────────────────────────────
+  // Maps scroll 0→1 to video offset→duration (skips black first frames)
   const getProgress = () => {
     const el = containerRef?.current;
     if (!el) return 0;
@@ -32,9 +36,32 @@ export default function CinematicBackground({ containerRef }) {
 
   const getVideoTime = (p) => {
     const d = videoDur.current;
-    if (!d) return 0;
+    if (!d) return VIDEO_START_OFFSET;
+    // Map scroll 0→1 to video offset→duration
     if (p >= 0.99) return d;
-    return p * d;
+    return VIDEO_START_OFFSET + p * (d - VIDEO_START_OFFSET);
+  };
+
+  // ── Video Visibility (hide on Contact/Services) ───────────────────────────────
+  // Fades out smoothly when user scrolls past the cinematic container
+  const updateVisibility = () => {
+    const el = containerRef?.current;
+    const wrapper = wrapperRef.current;
+    if (!el || !wrapper) return;
+
+    const containerBottom = el.offsetTop + el.offsetHeight;
+    const scrollY = window.scrollY;
+    const fadeStart = containerBottom - window.innerHeight * 0.5;
+    const fadeEnd = containerBottom + window.innerHeight * 0.3;
+
+    if (scrollY < fadeStart) {
+      wrapper.style.opacity = "1";
+    } else if (scrollY > fadeEnd) {
+      wrapper.style.opacity = "0";
+    } else {
+      const t = (scrollY - fadeStart) / (fadeEnd - fadeStart);
+      wrapper.style.opacity = String(1 - t);
+    }
   };
 
   // ── Scroll Listener (RAF-throttled) ──────────────────────────────────────────
@@ -44,25 +71,25 @@ export default function CinematicBackground({ containerRef }) {
       if (!ticking) {
         requestAnimationFrame(() => {
           targetTime.current = getVideoTime(getProgress());
+          updateVisibility();
           ticking = false;
         });
         ticking = true;
       }
     };
     window.addEventListener("scroll", onScroll, { passive: true });
-    targetTime.current = getVideoTime(getProgress()); // sync on mount
+    targetTime.current = getVideoTime(getProgress());
+    updateVisibility();
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // ── Smooth RAF Loop ───────────────────────────────────────────────────────────
-  // Key insight: LERP makes it visually smooth, seek throttle at 30fps
-  // prevents decoder queue buildup (the actual cause of "stuck" animation)
+  // ── Smooth RAF Render Loop ────────────────────────────────────────────────────
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !isReady) return;
 
     const LERP = isMobile ? 0.12 : 0.18;
-    const SEEK_RATE = isMobile ? 40 : 33; // ms — matches video frame rate
+    const SEEK_RATE = isMobile ? 40 : 33;
     let lastSeek = 0;
     let running = true;
 
@@ -74,22 +101,22 @@ export default function CinematicBackground({ containerRef }) {
         const diff = targetTime.current - currentTime.current;
 
         if (Math.abs(diff) > 0.001) {
-          // Large jump → snap (navbar click, etc.)
           if (Math.abs(diff) > 2) {
             currentTime.current = targetTime.current;
           } else {
             currentTime.current += diff * LERP;
           }
 
-          // Snap to end to prevent LERP stall
           if (currentTime.current >= d - 0.08) {
             currentTime.current = d;
             targetTime.current = d;
           }
 
-          // Seek at 30fps — decoder processes at this rate comfortably
           if (timestamp - lastSeek >= SEEK_RATE) {
-            video.currentTime = Math.max(0, Math.min(d - 0.04, currentTime.current));
+            video.currentTime = Math.max(
+              VIDEO_START_OFFSET,
+              Math.min(d - 0.04, currentTime.current)
+            );
             lastSeek = timestamp;
           }
         }
@@ -114,9 +141,10 @@ export default function CinematicBackground({ containerRef }) {
       const d = video.duration;
       if (d && !isNaN(d)) {
         videoDur.current = d;
-        video.currentTime = 0;
-        currentTime.current = 0;
-        targetTime.current = 0;
+        // Start at offset to skip black intro frames
+        video.currentTime = VIDEO_START_OFFSET;
+        currentTime.current = VIDEO_START_OFFSET;
+        targetTime.current = VIDEO_START_OFFSET;
       }
     };
 
@@ -126,8 +154,8 @@ export default function CinematicBackground({ containerRef }) {
       try {
         await video.play();
         video.pause();
-        video.currentTime = 0;
-        currentTime.current = 0;
+        video.currentTime = VIDEO_START_OFFSET;
+        currentTime.current = VIDEO_START_OFFSET;
       } catch (_) {}
       setIsReady(true);
     };
@@ -150,8 +178,7 @@ export default function CinematicBackground({ containerRef }) {
 
   return (
     <>
-      {/* Auto-fading black overlay — hides the 0.3s frame decode period */}
-      {/* Pure CSS animation: no JS state, fades out automatically */}
+      {/* Auto-fading black overlay — hides first 0.4s while video decodes */}
       <div
         style={{
           position: "fixed",
@@ -159,14 +186,19 @@ export default function CinematicBackground({ containerRef }) {
           backgroundColor: "black",
           zIndex: 9998,
           pointerEvents: "none",
-          animation: "fadeOutBlack 0.3s ease 0.1s forwards",
+          animation: "fadeOutBlack 0.4s ease 0.1s forwards",
         }}
       />
 
-      {/* Video — always visible, first frame shows as soon as browser decodes it */}
+      {/* Video wrapper — fades out when user scrolls past About section */}
       <div
+        ref={wrapperRef}
         className="fixed inset-0 w-full h-screen pointer-events-none overflow-hidden"
-        style={{ zIndex: -1 }}
+        style={{
+          zIndex: -1,
+          opacity: 1,
+          transition: "opacity 0.4s ease",
+        }}
       >
         <video
           ref={videoRef}
