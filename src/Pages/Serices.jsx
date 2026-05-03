@@ -169,9 +169,8 @@ export default function Services() {
   return (
     <div
       id="services"
-      className="relative min-h-[100dvh] font-montserrat text-white px-4 md:px-10 py-16 pt-24 overflow-hidden bg-black"
+      className="relative min-h-[100dvh] font-montserrat text-white px-4 md:px-10 py-16 pt-24 overflow-hidden bg-black z-[1]"
     >
-      <div className="absolute top-0 left-0 w-full h-full bg-black/60 z-0" />
 
       <motion.main
         className="relative max-w-6xl mx-auto z-10"

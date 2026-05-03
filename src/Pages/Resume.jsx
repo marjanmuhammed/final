@@ -12,15 +12,9 @@ export default function Resume() {
   };
 
   return (
-    <div className="relative min-h-[100dvh] overflow-x-hidden pt-20 font-montserrat text-white">
-      {/* Background Video */}
-     
-
-      {/* Overlay to darken the video but lighter for transparency */}
-      <div className="fixed top-0 left-0 w-full h-full bg-black/40 -z-5" />
-
+    <div className="relative min-h-[100dvh] overflow-x-hidden pt-20 font-montserrat text-white bg-black z-[1]">
       {/* Content Container */}
-      <main className="relative max-w-5xl mx-auto bg-black/40 rounded-lg shadow-lg px-6 md:px-12 py-16">
+      <main className="relative max-w-5xl mx-auto bg-white/5 rounded-lg shadow-lg px-6 md:px-12 py-16">
         {/* Heading */}
         <h2 className="text-3xl md:text-4xl font-extrabold mb-10 tracking-tight bg-gradient-to-r from-blue-300 via-pink-300 to-purple-400 bg-clip-text text-transparent drop-shadow-lg">
           Resume

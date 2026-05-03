@@ -43,12 +43,7 @@ export default function Work() {
   };
 
   return (
-    <div className="relative min-h-[100dvh] text-white px-6 md:px-12 pt-24 pb-20 font-montserrat overflow-hidden">
-      {/* 🔲 Background Video */}
-
-      {/* 🟣 Overlay */}
-      <div className="absolute top-0 left-0 w-full h-full bg-black/60 z-0" />
-
+    <div className="relative min-h-[100dvh] text-white px-6 md:px-12 pt-24 pb-20 font-montserrat overflow-hidden bg-black z-[1]">
       {/* 🧠 Main Content */}
       <motion.main
         className="relative max-w-5xl mx-auto z-10"
@@ -65,7 +60,7 @@ export default function Work() {
           {projects.map(({ title, description, imageUrl, videoUrl, type, link }, i) => (
             <motion.div
               key={title}
-              className="bg-white/10 backdrop-blur-md rounded-xl shadow-xl overflow-hidden transition-all duration-300 hover:scale-[1.02]"
+              className="bg-white/10 rounded-xl shadow-xl overflow-hidden transition-all duration-300 hover:scale-[1.02]"
               variants={fadeUp}
               custom={i}
             >

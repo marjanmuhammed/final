@@ -94,25 +94,9 @@ export default function Contact() {
   ];
 
   return (
-    <div className="relative min-h-[100dvh] overflow-x-hidden pt-20 font-montserrat text-white">
-      {/* Background Video */}
-      <video
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="auto"
-        className="fixed top-0 left-0 w-full h-full object-cover -z-10"
-      >
-        <source src="/video/13495-248644905.mp4" type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
-
-      {/* Overlay */}
-      <div className="fixed top-0 left-0 w-full h-full bg-black/40 -z-5" />
-
+    <div className="relative min-h-[100dvh] overflow-x-hidden pt-20 font-montserrat text-white bg-black z-[1]">
       {/* Main Section */}
-      <main className="relative max-w-7xl mx-auto bg-black/40 rounded-lg shadow-lg px-6 md:px-12 py-16 flex flex-col-reverse md:flex-row items-center gap-12 lg:gap-24">
+      <main className="relative max-w-7xl mx-auto bg-white/5 rounded-lg shadow-lg px-6 md:px-12 py-16 flex flex-col-reverse md:flex-row items-center gap-12 lg:gap-24">
 
         {/* Left Section (Form) */}
         <div className="flex-1 w-full max-w-xl space-y-12 z-20">
@@ -158,7 +142,7 @@ export default function Contact() {
           </div>
 
           {/* Contact Form */}
-          <div className="relative p-8 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden group">
+          <div className="relative p-8 rounded-2xl bg-white/5 border border-white/10 shadow-2xl overflow-hidden group">
             {/* Hyperspeed Effect Background */}
             <div className="absolute inset-0 z-0 opacity-60 pointer-events-none">
               <Hyperspeed effectOptions={hyperspeedOptions} />

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 
 import Navbar from "./components/Navbar";
 import Home from "./Pages/Home";
@@ -9,14 +9,15 @@ import Resume from "./Pages/Resume";
 import Contact from "./Pages/Contact";
 import Footer from "./Pages/Footer";
 import Hummingbird from "./components/Hummingbird";
-
-
+import CinematicBackground from "./components/CinematicBackground";
 
 import "./App.css";
 import Particles from "react-tsparticles";
 import { loadFull } from "tsparticles";
 
 export default function App() {
+  const cinematicContainerRef = useRef(null);
+  
   const particlesInit = async (main) => {
     await loadFull(main);
   };
@@ -47,20 +48,20 @@ export default function App() {
       color: { value: "#ffffff" },
       links: {
         color: "#ffffff",
-        distance: 150,
+        distance: 100,
         enable: !isMobile, // DISABLE links on mobile - big performance win
-        opacity: 0.4,
+        opacity: 0.2,
         width: 1,
       },
       move: {
         direction: "none",
         enable: true,
         outModes: "out",
-        speed: isMobile ? 0.5 : 0.9, // Slower movement on mobile
+        speed: isMobile ? 0.3 : 0.5, // Slower movement on mobile
       },
       number: {
-        value: isMobile ? 40 : 150, // Significantly fewer particles on mobile
-        density: { enable: true, area: 800 },
+        value: isMobile ? 20 : 60, // Significantly fewer particles for better performance
+        density: { enable: true, area: 1000 },
       },
       opacity: { value: 0.6 },
       shape: { type: "circle" },
@@ -72,11 +73,14 @@ export default function App() {
   return (
     <>
       {!isMobile && <Particles id="tsparticles" init={particlesInit} options={particlesOptions} />}
+      <CinematicBackground containerRef={cinematicContainerRef} />
       <Hummingbird />
       <Navbar />
       <main className="relative">
-        <section id="home"><Home /></section>
-        <section id="about"><About /></section>
+        <div ref={cinematicContainerRef}>
+          <section id="home"><Home /></section>
+          <section id="about"><About /></section>
+        </div>
         <section id="services"><Services /></section>
       
         <section id="work"><Work /></section>

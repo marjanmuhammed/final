@@ -1,6 +1,5 @@
-import React, { useRef, useEffect, useState } from "react";
-import { motion, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
-import { useInView } from "react-intersection-observer";
+import React, { useRef, useEffect } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 
 import {
   FaPhoneAlt, FaMapMarkerAlt, FaGraduationCap, FaEnvelope,
@@ -8,108 +7,9 @@ import {
   FaJs, FaReact, FaGitAlt, FaHashtag
 } from "react-icons/fa";
 import { SiTailwindcss, SiRedux } from "react-icons/si";
-import { getCachedImage } from "../lib/preloader";
 
 export default function About() {
   const containerRef = useRef(null);
-  const canvasRef = useRef(null);
-  const { ref: viewRef, inView } = useInView({ threshold: 0.1 });
-
-  const TOTAL_FRAMES = 240;
-  const [imagesLoaded, setImagesLoaded] = useState(false);
-
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start end", "end end"]
-  });
-
-  const frameIndex = useTransform(scrollYProgress, [0, 1], [1, TOTAL_FRAMES]);
-
-  // Snap instantly to opacity 1 at the exact boundary to perfectly hide the Hero car sliding up underneath
-  const canvasOpacity = useTransform(scrollYProgress, [0, 0.01], [0, 1]);
-
-  useEffect(() => {
-    // We already preloaded everything in Home.jsx, 
-    // so we just need to render the first frame here.
-    renderFrame(1);
-  }, []);
-
-  const renderFrame = (idx) => {
-    if (!canvasRef.current || !inView) return;
-    const img = getCachedImage('about', idx);
-
-    if (!img) {
-      // Fallback to nearest loaded frame
-      for (let i = Math.round(idx); i >= 1; i--) {
-        const cached = getCachedImage('about', i);
-        if (cached) {
-          drawToCanvas(canvasRef.current, cached);
-          return;
-        }
-      }
-      return;
-    }
-    drawToCanvas(canvasRef.current, img);
-  };
-
-  const updateCanvasSize = (canvas) => {
-    const isMobile = window.innerWidth < 640;
-    const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.3 : 2);
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    
-    if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
-      canvas.width = width * dpr;
-      canvas.height = height * dpr;
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
-    }
-  };
-
-  const drawToCanvas = (canvas, img) => {
-    const ctx = canvas.getContext("2d", { alpha: false });
-    if (!ctx) return;
-
-    updateCanvasSize(canvas);
-
-    const isMobile = window.innerWidth < 640;
-    const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2);
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.scale(dpr, dpr);
-
-    const canvasWidth = window.innerWidth;
-    const canvasHeight = window.innerHeight;
-    const canvasRatio = canvasWidth / canvasHeight;
-    const imgRatio = img.width / img.height;
-    
-    let drawWidth = canvasWidth;
-    let drawHeight = canvasHeight;
-
-    if (canvasRatio > imgRatio) {
-      drawHeight = canvasWidth / imgRatio;
-    } else {
-      drawWidth = canvasHeight * imgRatio;
-    }
-
-    const offsetX = (canvasWidth - drawWidth) / 2;
-    const offsetY = (canvasHeight - drawHeight) / 2;
-
-    ctx.imageSmoothingQuality = "medium";
-
-    ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
-  };
-
-  const frameId = useRef(null);
-  useMotionValueEvent(frameIndex, "change", (latest) => {
-    if (frameId.current) cancelAnimationFrame(frameId.current);
-    frameId.current = requestAnimationFrame(() => renderFrame(latest));
-  });
-
-  useEffect(() => {
-    const handleResize = () => requestAnimationFrame(() => renderFrame(frameIndex.get()));
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [frameIndex]);
 
   const fadeUpVariant = {
     hidden: { opacity: 0, y: 40 },
@@ -132,24 +32,7 @@ export default function About() {
   ];
 
   return (
-    <div ref={containerRef} id="about" className="relative w-full min-h-[250dvh] bg-transparent font-montserrat text-white pb-[15vh]">
-      {/* Background Canvas */}
-      <motion.div 
-        style={{ opacity: canvasOpacity }}
-        className="absolute top-0 left-0 w-full h-[calc(100%+100dvh)] z-0 pointer-events-none mt-[-100dvh]"
-      >
-        <div ref={viewRef} className="sticky top-0 w-full h-[100dvh] overflow-hidden">
-
-          <motion.canvas
-            ref={canvasRef}
-            style={{ willChange: "transform" }}
-            className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-          />
-
-          <div className="absolute inset-0 bg-black/50 pointer-events-none" />
-        </div>
-      </motion.div>
-
+    <div ref={containerRef} id="about" className="relative w-full min-h-[400dvh] bg-transparent font-montserrat text-white">
       <div className="relative z-10 px-4 md:px-10 py-16 pt-[15vh]">
         <motion.main
           className="relative max-w-5xl mx-auto z-10"
@@ -186,7 +69,7 @@ export default function About() {
           ].map(({ icon, label, value }, i) => (
             <motion.div
               key={label}
-              className="flex items-center bg-white/10 backdrop-blur-md rounded-xl shadow-md p-6 space-x-5 hover:bg-white/20 transition-all duration-300"
+              className="flex items-center bg-white/10 rounded-xl shadow-md p-6 space-x-5 hover:bg-white/20 transition-all duration-300"
               variants={fadeUpVariant}
               transition={{ delay: 0.2 + i * 0.25, duration: 1.2 }}
               whileHover={{ scale: 1.05 }}
