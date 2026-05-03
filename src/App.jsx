@@ -13,6 +13,7 @@ import CinematicBackground from "./components/CinematicBackground";
 import PerformanceGuard from "./components/PerformanceGuard";
 import ParticlesBackground from "./components/ParticlesBackground";
 import PerformanceToggle from "./components/PerformanceToggle";
+import ChatBot from "./components/ChatBot";
 import { PerformanceProvider, usePerformance } from "./context/PerformanceContext";
 
 
@@ -48,6 +49,8 @@ function AppContent() {
         <Navbar />
         
         <PerformanceToggle />
+        
+        <ChatBot />
 
 
         
