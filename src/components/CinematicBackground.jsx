@@ -113,29 +113,39 @@ export default function CinematicBackground({ containerRef }) {
     }
   }, [isReady, minTimeMet]);
 
-  // ── 4. Video Preloading & Setup ─────────────────────────────────────────────
+  // ── 4. Hybrid Video Preloading & Swapping ──────────────────────────────────
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    // 1. Native Streaming for Instant Load
-    // This allows the website to bypass the loader screen IMMEDIATELY once the first frame is ready.
+    // 1. Start with Native Streaming for INSTANT Loader Bypass
     video.src = "/loading/benz1_optimized.mp4";
     video.load();
 
-    video.onloadeddata = () => {
+    const handleLoadedData = () => {
+      // Instantly open the website once the first frame is ready
       videoDur.current = video.duration;
       video.currentTime = VIDEO_START_OFFSET;
-      setIsReady(true); // Site opens immediately!
+      setIsReady(true);
     };
+    
+    video.addEventListener("loadeddata", handleLoadedData);
 
-    // 2. Silent Background Caching to Fix Vercel Buffering
-    // This silently downloads the rest of the 41MB video in the background into the browser cache,
-    // so when you scroll, it reads from cache instead of making slow Vercel requests!
-    fetch("/loading/benz1_optimized.mp4", { cache: 'force-cache' }).catch(() => {});
+    // 2. Silently fetch the Blob in the background to FIX Vercel lag
+    fetch("/loading/benz1_optimized.mp4")
+      .then(res => res.blob())
+      .then(blob => {
+        // Once fully downloaded, silently swap the source to RAM (Blob)
+        const blobUrl = URL.createObjectURL(blob);
+        const currentTime = video.currentTime; // Save exact scroll position
+        
+        video.src = blobUrl;
+        video.currentTime = currentTime; // Restore position seamlessly
+      })
+      .catch(err => console.error("Blob preload failed:", err));
 
     return () => {
-      video.onloadeddata = null;
+      video.removeEventListener("loadeddata", handleLoadedData);
     };
   }, []);
 
