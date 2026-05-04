@@ -27,16 +27,13 @@ export default function CinematicBackground({ containerRef }) {
   const [loaderVisible, setLoaderVisible] = useState(true);
 
   const videoDur = useRef(0);
+
   // ── 1. Optimized Scroll Tracking & Animation via GSAP ───────────────────
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !isReady) return;
 
-    // We use GSAP ScrollTrigger for buttery smooth, lag-free scrubbing.
-    // This avoids the choppiness of manually throttling seeked events.
     let ctx = gsap.context(() => {
-      // 1. Scrubbing Trigger: Stops scrubbing when container hits the bottom of the screen.
-      // This FREEZES the video before Services slides over it, preventing decoding lag!
       ScrollTrigger.create({
         trigger: containerRef.current,
         start: "top top",
@@ -47,14 +44,9 @@ export default function CinematicBackground({ containerRef }) {
             const d = videoDur.current || video.duration;
             if (d) {
               const targetTime = VIDEO_START_OFFSET + self.progress * (d - VIDEO_START_OFFSET - 0.05);
-              
-              // Frame snapping optimization (assumes 30fps video):
-              // Setting currentTime on heavily compressed MP4s causes massive decoding lag.
-              // Snapping to the nearest frame (~0.033s) eliminates micro-seeking and saves CPU/GPU.
               const frameTime = 1 / 30; 
               const snappedTime = Math.round(targetTime / frameTime) * frameTime;
               
-              // Only set currentTime if the snapped frame actually changed!
               if (Math.abs(video.currentTime - snappedTime) > frameTime / 2) {
                 video.currentTime = Math.max(VIDEO_START_OFFSET, snappedTime);
               }
@@ -63,8 +55,6 @@ export default function CinematicBackground({ containerRef }) {
         }
       });
 
-      // 2. Visibility Trigger: Hides the video completely when the container is fully off screen 
-      // (meaning the black Services section has fully slid up and completely covered it).
       ScrollTrigger.create({
         trigger: containerRef.current,
         start: "top top",
@@ -79,7 +69,7 @@ export default function CinematicBackground({ containerRef }) {
     });
 
     return () => {
-      ctx.revert(); // Cleans up GSAP animations and ScrollTriggers
+      ctx.revert(); 
     };
   }, [isReady, containerRef]);
 
@@ -92,20 +82,19 @@ export default function CinematicBackground({ containerRef }) {
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / duration, 1);
       
-      // Smoothly update percentage display
       setDisplayPct(Math.floor(progress * 100));
 
       if (progress >= 1) {
         clearInterval(timer);
         setMinTimeMet(true);
       }
-    }, 16); // ~60fps updates for smooth bar
+    }, 16);
 
     return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
-    // Reveal ONLY when video is ready AND 5 seconds have passed
+    // Reveal ONLY when video is completely downloaded AND 5 seconds have passed
     if (isReady && minTimeMet) {
       setCanShowSite(true);
       const hideTimer = setTimeout(() => setLoaderVisible(false), 1000);
@@ -113,39 +102,32 @@ export default function CinematicBackground({ containerRef }) {
     }
   }, [isReady, minTimeMet]);
 
-  // ── 4. Hybrid Video Preloading & Swapping ──────────────────────────────────
+  // ── 4. Video Preloading into RAM (Blob) ──────────────────────────────────────
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    // 1. Start with Native Streaming for INSTANT Loader Bypass
-    video.src = "/loading/benz1_optimized.mp4";
-    video.load();
-
-    const handleLoadedData = () => {
-      // Instantly open the website once the first frame is ready
-      videoDur.current = video.duration;
-      video.currentTime = VIDEO_START_OFFSET;
-      setIsReady(true);
-    };
-    
-    video.addEventListener("loadeddata", handleLoadedData);
-
-    // 2. Silently fetch the Blob in the background to FIX Vercel lag
     fetch("/loading/benz1_optimized.mp4")
       .then(res => res.blob())
       .then(blob => {
-        // Once fully downloaded, silently swap the source to RAM (Blob)
         const blobUrl = URL.createObjectURL(blob);
-        const currentTime = video.currentTime; // Save exact scroll position
-        
         video.src = blobUrl;
-        video.currentTime = currentTime; // Restore position seamlessly
+        
+        video.onloadedmetadata = () => {
+          videoDur.current = video.duration;
+          video.currentTime = VIDEO_START_OFFSET;
+          setIsReady(true);
+        };
+        video.load();
       })
-      .catch(err => console.error("Blob preload failed:", err));
+      .catch(err => {
+        console.error("Failed to preload video blob:", err);
+        video.src = "/loading/benz1_optimized.mp4";
+        setIsReady(true);
+      });
 
     return () => {
-      video.removeEventListener("loadeddata", handleLoadedData);
+      video.onloadedmetadata = null;
     };
   }, []);
 
@@ -166,7 +148,6 @@ export default function CinematicBackground({ containerRef }) {
               EVOLUTION IN PROGRESS
             </h2>
             
-            {/* Smooth Progress Bar */}
             <div className="w-48 h-[1px] bg-white/10 relative overflow-hidden">
                 <div 
                   className="absolute inset-0 bg-blue-500 origin-left transition-transform duration-100"
