@@ -38,7 +38,7 @@ export default function CinematicBackground({ containerRef }) {
       ScrollTrigger.create({
         trigger: containerRef.current,
         start: "top top",
-        end: "bottom bottom",
+        end: "bottom top", // Keep video active until container is fully off screen, allowing Services to slide over it
         scrub: 1.2, // Smooth interpolation value (adjusts for framerate drops)
         onUpdate: (self) => {
           if (video.readyState >= 2) {
