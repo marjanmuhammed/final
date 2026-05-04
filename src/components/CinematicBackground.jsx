@@ -9,100 +9,92 @@ const VIDEO_START_OFFSET = 0.5;
 export default function CinematicBackground({ containerRef }) {
   const videoRef = useRef(null);
   const wrapperRef = useRef(null);
-  
+  const videoDur = useRef(0);
+  const isReadyRef = useRef(false);
+
   const [isReady, setIsReady] = useState(false);
 
-  const videoDur = useRef(0);
-
-  // ── 1. Optimized Scroll Tracking & Animation via GSAP ───────────────────
+  // ── Scroll Scrubbing (30fps Frame Snapping) ──────────────────────────────────
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !isReady) return;
-
-    let requestID;
-    let targetTime = VIDEO_START_OFFSET;
-
-    const updateVideo = () => {
-      if (video.readyState >= 2) {
-        // Smoothly interpolate towards the target time for ultra-smooth scrubbing
-        const diff = targetTime - video.currentTime;
-        if (Math.abs(diff) > 0.001) {
-          video.currentTime += diff * 0.15; // Smooth damping
-        }
-      }
-      requestID = requestAnimationFrame(updateVideo);
-    };
+    if (!video || !isReady || !containerRef.current) return;
 
     let ctx = gsap.context(() => {
       ScrollTrigger.create({
         trigger: containerRef.current,
         start: "top top",
-        end: "bottom bottom", 
-        scrub: 0.8, // Reduced for better responsiveness
+        end: "bottom bottom",
+        scrub: 1.2,
         onUpdate: (self) => {
-          const d = videoDur.current || video.duration;
-          if (d) {
-            targetTime = VIDEO_START_OFFSET + self.progress * (d - VIDEO_START_OFFSET - 0.1);
+          if (video.readyState < 2) return;
+          const d = videoDur.current;
+          if (!d || isNaN(d) || d <= 0) return;
+
+          const targetTime =
+            VIDEO_START_OFFSET + self.progress * (d - VIDEO_START_OFFSET - 0.05);
+
+          const frameTime = 1 / 30;
+          const snappedTime = Math.round(targetTime / frameTime) * frameTime;
+          const clamped = Math.max(VIDEO_START_OFFSET, snappedTime);
+
+          if (Math.abs(video.currentTime - clamped) > frameTime / 2) {
+            video.currentTime = clamped;
           }
-        }
+        },
       });
 
       ScrollTrigger.create({
         trigger: containerRef.current,
         start: "top top",
-        end: "bottom top", 
+        end: "bottom top",
         onLeave: () => {
           if (wrapperRef.current) wrapperRef.current.style.visibility = "hidden";
         },
         onEnterBack: () => {
           if (wrapperRef.current) wrapperRef.current.style.visibility = "visible";
-        }
+        },
       });
     });
 
-    requestID = requestAnimationFrame(updateVideo);
-
-    return () => {
-      ctx.revert(); 
-      cancelAnimationFrame(requestID);
-    };
+    return () => ctx.revert();
   }, [isReady, containerRef]);
 
-  // ── 4. Native Video Loading (Optimized for Streaming) ───────────────────────
+  // ── Video Loading ────────────────────────────────────────────────────────────
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    video.src = "/loading/benz1_optimized.mp4";
-    
-    const handleReady = () => {
+    const markReady = () => {
+      // Guard: only fire once
+      if (isReadyRef.current) return;
+      if (!video.duration || isNaN(video.duration) || video.duration <= 0) return;
+
+      isReadyRef.current = true;
       videoDur.current = video.duration;
       video.currentTime = VIDEO_START_OFFSET;
       setIsReady(true);
     };
 
-    video.onloadedmetadata = handleReady;
-    video.onloadeddata = handleReady;
-    
+    video.addEventListener("loadedmetadata", markReady);
+    video.addEventListener("loadeddata", markReady);
+    video.addEventListener("canplay", markReady);
+
+    video.src = "/loading/benz1.mp4";
     video.load();
 
-    // Prime the video for scrubbing (crucial for some browsers/mobile)
-    const playPromise = video.play();
-    if (playPromise !== undefined) {
-      playPromise.then(() => {
-        video.pause();
-      }).catch(() => {
-        // Auto-play was prevented, which is fine for scrubbing
-      });
-    }
-
-    // Fallback: If metadata doesn't load within 2.5s, show the wrapper anyway 
-    // to ensure text/content isn't hidden by opacity: 0
-    const fallback = setTimeout(() => setIsReady(true), 2500);
+    // Safety fallback — unblock if events never fire (e.g. some mobile browsers)
+    const fallback = setTimeout(() => {
+      if (!isReadyRef.current) {
+        isReadyRef.current = true;
+        videoDur.current = video.duration || 10;
+        setIsReady(true);
+      }
+    }, 6000);
 
     return () => {
-      video.onloadedmetadata = null;
-      video.onloadeddata = null;
+      video.removeEventListener("loadedmetadata", markReady);
+      video.removeEventListener("loadeddata", markReady);
+      video.removeEventListener("canplay", markReady);
       clearTimeout(fallback);
     };
   }, []);
@@ -114,21 +106,21 @@ export default function CinematicBackground({ containerRef }) {
       style={{
         zIndex: -1,
         opacity: isReady ? 1 : 0,
-        transition: "opacity 1.2s ease-in-out"
+        transition: "opacity 1.2s ease-in-out",
       }}
     >
       <video
         ref={videoRef}
-        muted playsInline preload="auto"
-        disableRemotePlayback
-        disablePictureInPicture
+        muted
+        playsInline
+        preload="auto"
+        poster="/loading/benz1_poster.jpg"
         className="w-full h-full object-cover"
         style={{
           transform: "translate3d(0,0,0)",
-          willChange: "transform, opacity",
+          willChange: "transform",
           backfaceVisibility: "hidden",
-          perspective: "1000px",
-          imageRendering: "high-quality",
+          WebkitBackfaceVisibility: "hidden",
         }}
       />
     </div>

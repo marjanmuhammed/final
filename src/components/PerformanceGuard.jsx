@@ -33,11 +33,10 @@ export default function PerformanceGuard({ children }) {
 
     // We no longer check savedChoice for showing the modal if it's a low-end device.
     // This ensures it shows on every refresh as requested.
+    // Only show modal for actual low-end devices (Android with low RAM/Cores)
+    // iPhones and high-end devices skip the alert and enter High-End mode
     if (isLowEndDevice) {
       setShowModal(true);
-    } else if (isMobile) {
-      setIsLowEnd(true); // Force low-end (particles) for all mobiles to prevent video stuck
-      setHasChoice(true);
     } else {
       setIsLowEnd(false);
       setHasChoice(true);
