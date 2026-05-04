@@ -65,7 +65,7 @@ export default function PerformanceToggle() {
                     <h4 className="text-[11px] font-black uppercase tracking-wider">High-End Mode</h4>
                   </div>
                   <p className="text-[10px] text-gray-400 leading-relaxed pl-5">
-                    Provides the full cinematic experience with 4K video sequences and advanced visual effects.
+                    Full cinematic experience. The <span className="text-blue-400/80 font-bold">adaptive engine</span> monitors live FPS and auto-adjusts quality — smooth 60fps on capable hardware.
                   </p>
                 </div>
 
@@ -78,7 +78,7 @@ export default function PerformanceToggle() {
                     <h4 className="text-[11px] font-black uppercase tracking-wider">Low-End Mode</h4>
                   </div>
                   <p className="text-[10px] text-gray-400 leading-relaxed pl-5">
-                    Optimized for devices with <span className="text-amber-500/80 font-bold">less than 4GB RAM</span>. Disables heavy scroll based transition animation to prevent lag.
+                    Replaces video with particles for devices with <span className="text-amber-500/80 font-bold">less than 4GB RAM</span>. The engine still adapts rendering quality in real-time to prevent stutter.
                   </p>
                 </div>
               </div>
