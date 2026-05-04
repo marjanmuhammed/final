@@ -35,25 +35,31 @@ export default function CinematicBackground({ containerRef }) {
     // We use GSAP ScrollTrigger for buttery smooth, lag-free scrubbing.
     // This avoids the choppiness of manually throttling seeked events.
     let ctx = gsap.context(() => {
+      // 1. Scrubbing Trigger: Stops scrubbing when container hits the bottom of the screen.
+      // This FREEZES the video before Services slides over it, preventing decoding lag!
       ScrollTrigger.create({
         trigger: containerRef.current,
         start: "top top",
-        end: "bottom top", // Keep video active until container is fully off screen, allowing Services to slide over it
-        scrub: 1.2, // Smooth interpolation value (adjusts for framerate drops)
+        end: "bottom bottom", 
+        scrub: 1.2, 
         onUpdate: (self) => {
           if (video.readyState >= 2) {
             const d = videoDur.current || video.duration;
             if (d) {
               const targetTime = VIDEO_START_OFFSET + self.progress * (d - VIDEO_START_OFFSET - 0.05);
-              // Directly set currentTime. Modern browsers handle this efficiently 
-              // when driven by GSAP's optimized ticker.
               video.currentTime = Math.max(VIDEO_START_OFFSET, targetTime);
             }
           }
-        },
+        }
+      });
+
+      // 2. Visibility Trigger: Hides the video completely when the container is fully off screen 
+      // (meaning the black Services section has fully slid up and completely covered it).
+      ScrollTrigger.create({
+        trigger: containerRef.current,
+        start: "top top",
+        end: "bottom top", 
         onLeave: () => {
-          // Hide video completely when scrolling past the section to free up GPU/CPU 
-          // and prevent buffering/lag in later sections like Delivered Projects.
           if (wrapperRef.current) wrapperRef.current.style.visibility = "hidden";
         },
         onEnterBack: () => {
