@@ -9,11 +9,12 @@ export default function PerformanceGuard({ children }) {
   const [showModal, setShowModal] = useState(false);
   const [hasChoice, setHasChoice] = useState(false);
 
+  const isAndroid = typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent);
+
   useEffect(() => {
     // 1. Detection Logic
     const memory = navigator.deviceMemory || 8; 
     const cores = navigator.hardwareConcurrency || 8; 
-    const isAndroid = /Android/i.test(navigator.userAgent);
 
 
     // URL override for testing: ?performance=low or ?performance=reset
@@ -56,7 +57,7 @@ export default function PerformanceGuard({ children }) {
 
   if (showModal) {
     return (
-      <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/95 backdrop-blur-md p-6 font-montserrat text-white">
+      <div className={`fixed inset-0 z-[100000] flex items-center justify-center bg-black/95 backdrop-blur-md p-6 ${isAndroid ? "" : "font-montserrat"} text-white`}>
         <div className="max-w-md w-full bg-[#111] border border-white/10 rounded-2xl p-8 shadow-2xl relative overflow-hidden group">
           <div className="absolute -top-24 -left-24 w-48 h-48 bg-blue-500/10 blur-[100px] rounded-full" />
           <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-red-500/10 blur-[100px] rounded-full" />
@@ -67,12 +68,12 @@ export default function PerformanceGuard({ children }) {
             </div>
 
             <h2 className="text-2xl font-bold text-white mb-4 tracking-tight">
-              Performance Warning
+              Performance Check
             </h2>
             
             <p className="text-white/60 text-sm leading-relaxed mb-8">
-              ⚠️ Your device may not support the full 3D scroll-based experience. <br/>
-              For best performance, use a high end device or PC, or continue with low end mode.
+              ⚠️ Optimized experience is best viewed on a PC or High-End Device. <br/>
+              Continuing on this device will activate Low-End mode for stability.
             </p>
 
             <div className="grid grid-cols-1 gap-4 w-full">
@@ -81,7 +82,7 @@ export default function PerformanceGuard({ children }) {
                 className="w-full py-4 bg-white text-black font-bold rounded-xl hover:bg-white/90 transition-all active:scale-95 flex items-center justify-center gap-2 shadow-xl"
               >
                 <Zap className="w-4 h-4" />
-                Continue with Low End Mode
+                Continue to Portfolio
               </button>
               
               <button

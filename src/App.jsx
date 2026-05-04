@@ -16,7 +16,6 @@ import PerformanceGuard from "./components/PerformanceGuard";
 import ParticlesBackground from "./components/ParticlesBackground";
 import PerformanceToggle from "./components/PerformanceToggle";
 import ChatBot from "./components/ChatBot";
-import FloatingResumeButton from "./components/FloatingResumeButton";
 import { PerformanceProvider, usePerformance } from "./context/PerformanceContext";
 
 import "./App.css";
@@ -77,7 +76,6 @@ function AppContent() {
         <Navbar />
         <PerformanceToggle />
         <ChatBot />
-        <FloatingResumeButton />
 
         <main className="relative">
           <div ref={cinematicContainerRef} className={isLowEnd ? "min-h-screen" : "h-[800dvh]"}>
