@@ -121,7 +121,7 @@ export default function CinematicBackground({ containerRef }) {
     const video = videoRef.current;
     if (!video) return;
 
-    fetch("/loading/benz1.mp4")
+    fetch("/loading/benz1_optimized.mp4")
       .then(res => res.blob())
       .then(blob => {
         const blobUrl = URL.createObjectURL(blob);
@@ -138,7 +138,7 @@ export default function CinematicBackground({ containerRef }) {
       .catch(err => {
         console.error("Failed to preload video blob:", err);
         // Fallback to normal URL
-        video.src = "/loading/benz1.mp4";
+        video.src = "/loading/benz1_optimized.mp4";
         setIsReady(true);
       });
 
