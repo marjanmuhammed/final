@@ -15,7 +15,7 @@ export default function PerformanceGuard({ children }) {
     // 1. Detection Logic
     const memory = navigator.deviceMemory || 8; 
     const cores = navigator.hardwareConcurrency || 8; 
-
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
 
     // URL override for testing: ?performance=low or ?performance=reset
     const urlParams = new URLSearchParams(window.location.search);
@@ -26,17 +26,18 @@ export default function PerformanceGuard({ children }) {
       localStorage.removeItem("performance_choice");
     }
 
-    // Detection Logic Update: 
     // Target only Android for the low-end check. iPhones are excluded.
     const isLowEndDevice = forceLow || (isAndroid && (memory <= 4 || cores <= 6));
     
-    console.log("Device Specs:", { memory, cores, isAndroid, forceLow, isLowEndDevice });
-
+    console.log("Device Specs:", { memory, cores, isAndroid, isMobile, forceLow, isLowEndDevice });
 
     // We no longer check savedChoice for showing the modal if it's a low-end device.
     // This ensures it shows on every refresh as requested.
     if (isLowEndDevice) {
       setShowModal(true);
+    } else if (isMobile) {
+      setIsLowEnd(true); // Force low-end (particles) for all mobiles to prevent video stuck
+      setHasChoice(true);
     } else {
       setIsLowEnd(false);
       setHasChoice(true);

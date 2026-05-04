@@ -24,8 +24,8 @@ export default function Home() {
     offset: ["start start", "end start"]
   });
 
-  const textOpacity = useTransform(textScrollProgress, [0, 0.1, 0.92, 0.98], [0, 1, 1, 0]);
-  const textY = useTransform(textScrollProgress, [0, 0.1], [30, 0]);
+  const textOpacity = useTransform(textScrollProgress, [0, 0.8, 0.98], [1, 1, 0]);
+  const textY = useTransform(textScrollProgress, [0, 0.8, 1], [0, 0, -50]);
 
   // Typing animation effect
   useEffect(() => {

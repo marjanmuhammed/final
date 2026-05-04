@@ -1,18 +1,8 @@
-import React, { useRef, useEffect, useState, useCallback } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
-/**
- * CinematicBackground — The Ultra-Smooth Professional Edition
- * 
- * This version uses the modern 'requestVideoFrameCallback' API (if available)
- * and dynamic seek-throttling to achieve the absolute maximum smoothness 
- * possible while maintaining original video clarity.
- */
-
-const isMobile = typeof window !== "undefined" && 
-  (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 768);
 
 const VIDEO_START_OFFSET = 0.5;
 
@@ -21,10 +11,6 @@ export default function CinematicBackground({ containerRef }) {
   const wrapperRef = useRef(null);
   
   const [isReady, setIsReady] = useState(false);
-  const [minTimeMet, setMinTimeMet] = useState(false);
-  const [canShowSite, setCanShowSite] = useState(false);
-  const [displayPct, setDisplayPct] = useState(0);
-  const [loaderVisible, setLoaderVisible] = useState(true);
 
   const videoDur = useRef(0);
 
@@ -33,24 +19,30 @@ export default function CinematicBackground({ containerRef }) {
     const video = videoRef.current;
     if (!video || !isReady) return;
 
+    let requestID;
+    let targetTime = VIDEO_START_OFFSET;
+
+    const updateVideo = () => {
+      if (video.readyState >= 2) {
+        // Smoothly interpolate towards the target time for ultra-smooth scrubbing
+        const diff = targetTime - video.currentTime;
+        if (Math.abs(diff) > 0.001) {
+          video.currentTime += diff * 0.15; // Smooth damping
+        }
+      }
+      requestID = requestAnimationFrame(updateVideo);
+    };
+
     let ctx = gsap.context(() => {
       ScrollTrigger.create({
         trigger: containerRef.current,
         start: "top top",
         end: "bottom bottom", 
-        scrub: 1.2, 
+        scrub: 0.8, // Reduced for better responsiveness
         onUpdate: (self) => {
-          if (video.readyState >= 2) {
-            const d = videoDur.current || video.duration;
-            if (d) {
-              const targetTime = VIDEO_START_OFFSET + self.progress * (d - VIDEO_START_OFFSET - 0.05);
-              const frameTime = 1 / 30; 
-              const snappedTime = Math.round(targetTime / frameTime) * frameTime;
-              
-              if (Math.abs(video.currentTime - snappedTime) > frameTime / 2) {
-                video.currentTime = Math.max(VIDEO_START_OFFSET, snappedTime);
-              }
-            }
+          const d = videoDur.current || video.duration;
+          if (d) {
+            targetTime = VIDEO_START_OFFSET + self.progress * (d - VIDEO_START_OFFSET - 0.1);
           }
         }
       });
@@ -68,116 +60,77 @@ export default function CinematicBackground({ containerRef }) {
       });
     });
 
+    requestID = requestAnimationFrame(updateVideo);
+
     return () => {
       ctx.revert(); 
+      cancelAnimationFrame(requestID);
     };
   }, [isReady, containerRef]);
-
-  // ── 3. Loader Controller (5 Seconds Progress) ───────────────────────────────
-  useEffect(() => {
-    const startTime = Date.now();
-    const duration = 5000;
-
-    const timer = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      
-      setDisplayPct(Math.floor(progress * 100));
-
-      if (progress >= 1) {
-        clearInterval(timer);
-        setMinTimeMet(true);
-      }
-    }, 16);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    // Reveal instantly when both video is ready AND loader has reached 100%
-    if (isReady && minTimeMet) {
-      setCanShowSite(true);
-      // Wait for the opacity transition (0.5s) before removing from DOM
-      const hideTimer = setTimeout(() => setLoaderVisible(false), 500);
-      return () => clearTimeout(hideTimer);
-    }
-  }, [isReady, minTimeMet]);
 
   // ── 4. Native Video Loading (Optimized for Streaming) ───────────────────────
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    // Use native streaming instead of Blob fetching to prevent hanging on Vercel
     video.src = "/loading/benz1_optimized.mp4";
     
-    video.onloadedmetadata = () => {
+    const handleReady = () => {
       videoDur.current = video.duration;
       video.currentTime = VIDEO_START_OFFSET;
       setIsReady(true);
     };
+
+    video.onloadedmetadata = handleReady;
+    video.onloadeddata = handleReady;
     
     video.load();
 
+    // Prime the video for scrubbing (crucial for some browsers/mobile)
+    const playPromise = video.play();
+    if (playPromise !== undefined) {
+      playPromise.then(() => {
+        video.pause();
+      }).catch(() => {
+        // Auto-play was prevented, which is fine for scrubbing
+      });
+    }
+
+    // Fallback: If metadata doesn't load within 2.5s, show the wrapper anyway 
+    // to ensure text/content isn't hidden by opacity: 0
+    const fallback = setTimeout(() => setIsReady(true), 2500);
+
     return () => {
       video.onloadedmetadata = null;
+      video.onloadeddata = null;
+      clearTimeout(fallback);
     };
   }, []);
 
   return (
-    <>
-      {/* ── Branded Loader ── */}
-      {loaderVisible && (
-        <div 
-          className="fixed inset-0 bg-black flex flex-col items-center justify-center z-[99999]"
-          style={{ 
-            opacity: canShowSite ? 0 : 1,
-            transition: "opacity 0.5s ease-in-out",
-            pointerEvents: canShowSite ? "none" : "all"
-          }}
-        >
-          <div className="flex flex-col items-center gap-6">
-            <h2 className="text-white/20 text-[10px] tracking-[0.8em] uppercase font-montserrat">
-              EVOLUTION IN PROGRESS
-            </h2>
-            
-            <div className="w-48 h-[1px] bg-white/10 relative overflow-hidden">
-                <div 
-                  className="absolute inset-0 bg-blue-500 origin-left transition-transform duration-100"
-                  style={{ transform: `scaleX(${displayPct / 100})` }} 
-                />
-            </div>
-            
-            <p className="text-white/40 text-[8px] tracking-[0.2em] font-montserrat tabular-nums">
-                {displayPct}%
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* ── Video Layer ── */}
-      <div
-        ref={wrapperRef}
-        className="fixed inset-0 w-full h-screen pointer-events-none overflow-hidden bg-black"
+    <div
+      ref={wrapperRef}
+      className="fixed inset-0 w-full h-screen pointer-events-none overflow-hidden bg-black"
+      style={{
+        zIndex: -1,
+        opacity: isReady ? 1 : 0,
+        transition: "opacity 1.2s ease-in-out"
+      }}
+    >
+      <video
+        ref={videoRef}
+        muted playsInline preload="auto"
+        disableRemotePlayback
+        disablePictureInPicture
+        className="w-full h-full object-cover"
         style={{
-          zIndex: -1,
-          opacity: isReady ? 1 : 0,
-          transition: "opacity 1.2s ease-in-out"
+          transform: "translate3d(0,0,0)",
+          willChange: "transform, opacity",
+          backfaceVisibility: "hidden",
+          perspective: "1000px",
+          imageRendering: "high-quality",
         }}
-      >
-        <video
-          ref={videoRef}
-          muted playsInline preload="auto"
-          className="w-full h-full object-cover"
-          style={{
-            transform: "translate3d(0,0,0)",
-            willChange: "transform",
-            backfaceVisibility: "hidden",
-            perspective: "1000px",
-            imageRendering: "high-quality",
-          }}
-        />
-      </div>
-    </>
+      />
+    </div>
   );
 }

@@ -5,7 +5,6 @@ import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
-import "lenis/dist/lenis.css";
 
 import Navbar from "./components/Navbar";
 import Home from "./Pages/Home";
@@ -21,6 +20,7 @@ import PerformanceGuard from "./components/PerformanceGuard";
 import ParticlesBackground from "./components/ParticlesBackground";
 import PerformanceToggle from "./components/PerformanceToggle";
 import ChatBot from "./components/ChatBot";
+import Loader from "./components/Loader";
 import { PerformanceProvider, usePerformance } from "./context/PerformanceContext";
 
 import "./App.css";
@@ -73,6 +73,7 @@ function AppContent() {
 
   return (
     <PerformanceGuard>
+      <Loader />
       <div className={`app-container ${isLowEnd ? "low-end-mode" : ""}`}>
         {isLowEnd ? (
           <ParticlesBackground />
