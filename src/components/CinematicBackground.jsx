@@ -113,37 +113,29 @@ export default function CinematicBackground({ containerRef }) {
     }
   }, [isReady, minTimeMet]);
 
-  // ── 4. Video Preloading into RAM (Blob) ──────────────────────────────────────
-  // This is the ultimate fix for Vercel lag! 
-  // By downloading the entire video into memory as a Blob, we prevent the browser 
-  // from making slow HTTP Range requests every time the user scrolls/scrubs.
+  // ── 4. Video Preloading & Setup ─────────────────────────────────────────────
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    fetch("/loading/benz1_optimized.mp4")
-      .then(res => res.blob())
-      .then(blob => {
-        const blobUrl = URL.createObjectURL(blob);
-        video.src = blobUrl;
-        
-        video.onloadedmetadata = () => {
-          videoDur.current = video.duration;
-          video.currentTime = VIDEO_START_OFFSET;
-          // Video is completely in RAM now
-          setIsReady(true);
-        };
-        video.load();
-      })
-      .catch(err => {
-        console.error("Failed to preload video blob:", err);
-        // Fallback to normal URL
-        video.src = "/loading/benz1_optimized.mp4";
-        setIsReady(true);
-      });
+    // 1. Native Streaming for Instant Load
+    // This allows the website to bypass the loader screen IMMEDIATELY once the first frame is ready.
+    video.src = "/loading/benz1_optimized.mp4";
+    video.load();
+
+    video.onloadeddata = () => {
+      videoDur.current = video.duration;
+      video.currentTime = VIDEO_START_OFFSET;
+      setIsReady(true); // Site opens immediately!
+    };
+
+    // 2. Silent Background Caching to Fix Vercel Buffering
+    // This silently downloads the rest of the 41MB video in the background into the browser cache,
+    // so when you scroll, it reads from cache instead of making slow Vercel requests!
+    fetch("/loading/benz1_optimized.mp4", { cache: 'force-cache' }).catch(() => {});
 
     return () => {
-      video.onloadedmetadata = null;
+      video.onloadeddata = null;
     };
   }, []);
 
