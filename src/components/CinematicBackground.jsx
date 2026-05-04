@@ -94,37 +94,30 @@ export default function CinematicBackground({ containerRef }) {
   }, []);
 
   useEffect(() => {
-    // Reveal ONLY when video is completely downloaded AND 5 seconds have passed
+    // Reveal instantly when both video is ready AND loader has reached 100%
     if (isReady && minTimeMet) {
       setCanShowSite(true);
-      const hideTimer = setTimeout(() => setLoaderVisible(false), 1000);
+      // Wait for the opacity transition (0.5s) before removing from DOM
+      const hideTimer = setTimeout(() => setLoaderVisible(false), 500);
       return () => clearTimeout(hideTimer);
     }
   }, [isReady, minTimeMet]);
 
-  // ── 4. Video Preloading into RAM (Blob) ──────────────────────────────────────
+  // ── 4. Native Video Loading (Optimized for Streaming) ───────────────────────
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    fetch("/loading/benz1_optimized.mp4")
-      .then(res => res.blob())
-      .then(blob => {
-        const blobUrl = URL.createObjectURL(blob);
-        video.src = blobUrl;
-        
-        video.onloadedmetadata = () => {
-          videoDur.current = video.duration;
-          video.currentTime = VIDEO_START_OFFSET;
-          setIsReady(true);
-        };
-        video.load();
-      })
-      .catch(err => {
-        console.error("Failed to preload video blob:", err);
-        video.src = "/loading/benz1_optimized.mp4";
-        setIsReady(true);
-      });
+    // Use native streaming instead of Blob fetching to prevent hanging on Vercel
+    video.src = "/loading/benz1_optimized.mp4";
+    
+    video.onloadedmetadata = () => {
+      videoDur.current = video.duration;
+      video.currentTime = VIDEO_START_OFFSET;
+      setIsReady(true);
+    };
+    
+    video.load();
 
     return () => {
       video.onloadedmetadata = null;
@@ -139,7 +132,7 @@ export default function CinematicBackground({ containerRef }) {
           className="fixed inset-0 bg-black flex flex-col items-center justify-center z-[99999]"
           style={{ 
             opacity: canShowSite ? 0 : 1,
-            transition: "opacity 0.8s ease-in-out",
+            transition: "opacity 0.5s ease-in-out",
             pointerEvents: canShowSite ? "none" : "all"
           }}
         >
