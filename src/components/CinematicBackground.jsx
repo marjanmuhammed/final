@@ -47,7 +47,17 @@ export default function CinematicBackground({ containerRef }) {
             const d = videoDur.current || video.duration;
             if (d) {
               const targetTime = VIDEO_START_OFFSET + self.progress * (d - VIDEO_START_OFFSET - 0.05);
-              video.currentTime = Math.max(VIDEO_START_OFFSET, targetTime);
+              
+              // Frame snapping optimization (assumes 30fps video):
+              // Setting currentTime on heavily compressed MP4s causes massive decoding lag.
+              // Snapping to the nearest frame (~0.033s) eliminates micro-seeking and saves CPU/GPU.
+              const frameTime = 1 / 30; 
+              const snappedTime = Math.round(targetTime / frameTime) * frameTime;
+              
+              // Only set currentTime if the snapped frame actually changed!
+              if (Math.abs(video.currentTime - snappedTime) > frameTime / 2) {
+                video.currentTime = Math.max(VIDEO_START_OFFSET, snappedTime);
+              }
             }
           }
         }
@@ -103,39 +113,37 @@ export default function CinematicBackground({ containerRef }) {
     }
   }, [isReady, minTimeMet]);
 
-  // ── 4. Video Preloading & Setup ─────────────────────────────────────────────
+  // ── 4. Video Preloading into RAM (Blob) ──────────────────────────────────────
+  // This is the ultimate fix for Vercel lag! 
+  // By downloading the entire video into memory as a Blob, we prevent the browser 
+  // from making slow HTTP Range requests every time the user scrolls/scrubs.
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    const onProgress = () => {
-      if (video.buffered.length > 0 && video.duration) {
-        const end = video.buffered.end(video.buffered.length - 1);
-        const pct = Math.round((end / video.duration) * 100);
-        if (pct >= 95 || end >= video.duration - 0.5) {
+    fetch("/loading/benz1.mp4")
+      .then(res => res.blob())
+      .then(blob => {
+        const blobUrl = URL.createObjectURL(blob);
+        video.src = blobUrl;
+        
+        video.onloadedmetadata = () => {
+          videoDur.current = video.duration;
+          video.currentTime = VIDEO_START_OFFSET;
+          // Video is completely in RAM now
           setIsReady(true);
-        }
-      }
-    };
-
-    const onMetadata = () => {
-      videoDur.current = video.duration;
-      video.currentTime = VIDEO_START_OFFSET;
-    };
-
-    const onCanPlayThrough = () => {
-      setIsReady(true);
-    };
-
-    video.addEventListener("loadedmetadata", onMetadata);
-    video.addEventListener("progress", onProgress);
-    video.addEventListener("canplaythrough", onCanPlayThrough);
-    video.load();
+        };
+        video.load();
+      })
+      .catch(err => {
+        console.error("Failed to preload video blob:", err);
+        // Fallback to normal URL
+        video.src = "/loading/benz1.mp4";
+        setIsReady(true);
+      });
 
     return () => {
-      video.removeEventListener("loadedmetadata", onMetadata);
-      video.removeEventListener("progress", onProgress);
-      video.removeEventListener("canplaythrough", onCanPlayThrough);
+      video.onloadedmetadata = null;
     };
   }, []);
 
@@ -183,7 +191,6 @@ export default function CinematicBackground({ containerRef }) {
       >
         <video
           ref={videoRef}
-          src="/loading/benz1.mp4"
           muted playsInline preload="auto"
           className="w-full h-full object-cover"
           style={{
