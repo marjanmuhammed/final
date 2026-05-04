@@ -1,5 +1,8 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
+import gsap from "gsap";
+import ScrollTrigger from "gsap/ScrollTrigger";
 
+gsap.registerPlugin(ScrollTrigger);
 /**
  * CinematicBackground — The Ultra-Smooth Professional Edition
  * 
@@ -23,126 +26,46 @@ export default function CinematicBackground({ containerRef }) {
   const [displayPct, setDisplayPct] = useState(0);
   const [loaderVisible, setLoaderVisible] = useState(true);
 
-  // Core state refs
-  const targetProgress = useRef(0);
-  const currentProgress = useRef(0);
   const videoDur = useRef(0);
-  const isSeeking = useRef(false);
-  const lastSeekTime = useRef(0);
-
-  // ── 1. Optimized Scroll Tracking ──────────────────────────────────────────
-  const getProgress = useCallback(() => {
-    const el = containerRef?.current;
-    if (!el) return 0;
-    
-    // Use lenis scroll if available, otherwise native scroll
-    const scrollY = window.lenis ? window.lenis.scroll : window.scrollY;
-    
-    const scrolled = scrollY - el.offsetTop;
-    const scrollable = el.offsetHeight - window.innerHeight;
-    if (scrollable <= 0) return 0;
-    return Math.min(Math.max(scrolled / scrollable, 0), 1);
-  }, [containerRef]);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    const wrapper = wrapperRef.current;
-
-    const onScroll = () => {
-      targetProgress.current = getProgress();
-      
-      // Visibility optimization
-      if (el && wrapper) {
-        const bottom = el.offsetTop + el.offsetHeight;
-        const scrollY = window.lenis ? window.lenis.scroll : window.scrollY;
-        const fadeStart = bottom - window.innerHeight * 0.5;
-        
-        if (scrollY > bottom + 200) {
-          wrapper.style.visibility = "hidden";
-        } else {
-          wrapper.style.visibility = "visible";
-          wrapper.style.opacity = scrollY > fadeStart ? Math.max(0, 1 - (scrollY - fadeStart) / 400) : 1;
-        }
-      }
-    };
-
-    // Listen to lenis if available
-    if (window.lenis) {
-      window.lenis.on('scroll', onScroll);
-    } else {
-      window.addEventListener("scroll", onScroll, { passive: true });
-    }
-
-    onScroll(); // Initial call
-
-    return () => {
-      if (window.lenis) {
-        window.lenis.off('scroll', onScroll);
-      } else {
-        window.removeEventListener("scroll", onScroll);
-      }
-    };
-  }, [getProgress, containerRef]);
-
-
-  // ── 2. The High-Performance Animation Loop ──────────────────────────────────
+  // ── 1. Optimized Scroll Tracking & Animation via GSAP ───────────────────
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !isReady) return;
 
-    // LERP tuning: lower is smoother and 'heavier'
-    const LERP = isMobile ? 0.05 : 0.1;
-    // Base seek rate (ms)
-    let seekRate = isMobile ? 60 : 33; 
-    
-    let rafId;
-    let running = true;
-    let seekStartTime = 0;
-
-    const update = (now) => {
-      if (!running) return;
-
-      const diff = targetProgress.current - currentProgress.current;
-      if (Math.abs(diff) > 0.0001) {
-        currentProgress.current += diff * LERP;
-
-        // Perform seek only if not busy and enough time passed
-        if (!isSeeking.current && (now - lastSeekTime.current > seekRate)) {
+    // We use GSAP ScrollTrigger for buttery smooth, lag-free scrubbing.
+    // This avoids the choppiness of manually throttling seeked events.
+    let ctx = gsap.context(() => {
+      ScrollTrigger.create({
+        trigger: containerRef.current,
+        start: "top top",
+        end: "bottom bottom",
+        scrub: 1.2, // Smooth interpolation value (adjusts for framerate drops)
+        onUpdate: (self) => {
           if (video.readyState >= 2) {
-            const d = videoDur.current;
-            const t = VIDEO_START_OFFSET + currentProgress.current * (d - VIDEO_START_OFFSET);
-            
-            isSeeking.current = true;
-            seekStartTime = now;
-            video.currentTime = Math.max(VIDEO_START_OFFSET, Math.min(d - 0.05, t));
-            lastSeekTime.current = now;
+            const d = videoDur.current || video.duration;
+            if (d) {
+              const targetTime = VIDEO_START_OFFSET + self.progress * (d - VIDEO_START_OFFSET - 0.05);
+              // Directly set currentTime. Modern browsers handle this efficiently 
+              // when driven by GSAP's optimized ticker.
+              video.currentTime = Math.max(VIDEO_START_OFFSET, targetTime);
+            }
           }
+        },
+        onLeave: () => {
+          // Hide video completely when scrolling past the section to free up GPU/CPU 
+          // and prevent buffering/lag in later sections like Delivered Projects.
+          if (wrapperRef.current) wrapperRef.current.style.visibility = "hidden";
+        },
+        onEnterBack: () => {
+          if (wrapperRef.current) wrapperRef.current.style.visibility = "visible";
         }
-      }
+      });
+    });
 
-      rafId = requestAnimationFrame(update);
-    };
-
-    const onSeeked = () => { 
-      isSeeking.current = false; 
-      // Dynamic performance adjustment:
-      // If a seek takes > 100ms, slow down the rate to prevent lag
-      const seekDuration = performance.now() - seekStartTime;
-      if (seekDuration > 100) {
-        seekRate = Math.min(seekRate + 10, 200); 
-      } else if (seekDuration < 30) {
-        seekRate = Math.max(seekRate - 2, isMobile ? 50 : 30);
-      }
-    };
-    video.addEventListener("seeked", onSeeked);
-
-    rafId = requestAnimationFrame(update);
     return () => {
-      running = false;
-      cancelAnimationFrame(rafId);
-      video.removeEventListener("seeked", onSeeked);
+      ctx.revert(); // Cleans up GSAP animations and ScrollTriggers
     };
-  }, [isReady]);
+  }, [isReady, containerRef]);
 
   // ── 3. Loader Controller (5 Seconds Progress) ───────────────────────────────
   useEffect(() => {

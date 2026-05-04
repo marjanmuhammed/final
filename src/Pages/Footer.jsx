@@ -12,7 +12,7 @@ export default function Footer() {
          <footer className="sticky bottom-0 z-10 py-10 font-montserrat text-center text-white">
  
   {/* Overlay */}
-  <div className="absolute bottom-0 left-0 w-full h-full bg-black/60 -z-10" />
+  <div className="absolute bottom-0 left-0 w-full h-full bg-black -z-10" />
 
   {/* Social Icons */}
   <div className="flex justify-center gap-6 text-2xl mb-4">
